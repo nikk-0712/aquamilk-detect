@@ -51,6 +51,7 @@
 #include <esp_sleep.h>
 
 #include <sensors.h>
+#include <serialio.h>
 #include <display.h>
 #include "svm_infer.h"
 #include "dashboard.h"
@@ -112,33 +113,9 @@ static void logAppend(const Verdict& v, const Reading& r) {
   if (out) { out.print(all.substring(keep_from)); out.close(); }
 }
 
-static void logToJson(String& out) {
-  out = "{\"rows\":[";
-  File f = LittleFS.open(LOG_PATH, FILE_READ);
-  if (f) {
-    bool first = true;
-    while (f.available()) {
-      String line = f.readStringUntil('\n');
-      line.trim();
-      if (line.length() < 5) continue;
-      int c[7], n = 0;
-      for (int i = 0; i < (int)line.length() && n < 7; i++) if (line[i] == ',') c[n++] = i;
-      if (n < 7) continue;
-      if (!first) out += ",";
-      first = false;
-      out += "{\"ms\":" + line.substring(0, c[0]) +
-             ",\"cls\":\"" + line.substring(c[0] + 1, c[1]) + "\"" +
-             ",\"conf\":" + line.substring(c[1] + 1, c[2]) +
-             ",\"ph\":" + line.substring(c[2] + 1, c[3]) +
-             ",\"tds\":" + line.substring(c[3] + 1, c[4]) +
-             ",\"turb\":" + line.substring(c[4] + 1, c[5]) +
-             ",\"sg\":" + line.substring(c[5] + 1, c[6]) +
-             ",\"temp\":" + line.substring(c[6] + 1) + "}";
-    }
-    f.close();
-  }
-  out += "]}";
-}
+// ponytail: /api/log streams the log file as-is. Rewriting those CSV lines into JSON on
+// the ESP32 cost 35 lines of substring surgery to produce something the dashboard then
+// re-split anyway — it already parses CSV for the export button.
 
 // --------------------------------------------------------------------- pushes
 static void pushStatus() {
@@ -148,20 +125,6 @@ static void pushStatus() {
   String s;
   serializeJson(d, s);
   ws.textAll(s);
-}
-
-static void fillReading(JsonDocument& d) {
-  const Reading& r = sensorsLatest();
-  d["t"] = "reading";
-  d["ph"] = r.ph_mv; d["tds"] = r.tds_mv; d["turb"] = r.turb_mv;
-  d["temp"] = r.temp_c; d["dens"] = r.density_g;
-  d["r"] = r.r; d["g"] = r.g; d["b"] = r.b; d["c"] = r.c;
-  JsonObject calc = d["calc"].to<JsonObject>();
-  float ph = phFromMv(r.ph_mv);
-  if (isnan(ph)) calc["ph"] = nullptr; else calc["ph"] = ph;
-  calc["ppm"] = tdsPpm(r.tds_mv, r.temp_c);
-  calc["ntu"] = turbidityNtu(r.turb_mv);
-  calc["sg"]  = specificGravity(r.density_g, r.temp_c);
 }
 
 static void fillResult(JsonDocument& d) {
@@ -181,7 +144,7 @@ static void fillResult(JsonDocument& d) {
 
 static void pushReading() {
   JsonDocument d;
-  fillReading(d);
+  readingJson(d);
   String s;
   serializeJson(d, s);
   ws.textAll(s);
@@ -197,19 +160,20 @@ static void pushResult() {
 
 // ------------------------------------------------------------------------ TFT
 static void tftIdle() {
-  static char l_ssid[26], l_ip[26], l_pass[26];
-  snprintf(l_ssid, sizeof l_ssid, "%s", (sta_mode ? sta_ssid : ap_ssid).c_str());
-  snprintf(l_ip,   sizeof l_ip,   "%s", ip_str.c_str());
-  snprintf(l_pass, sizeof l_pass, "%s", sta_mode ? "aquamilk.local" : ap_pass.c_str());
-  const char* lines[] = { "Tap to test", "", sta_mode ? "Wi-Fi (joined):" : "Wi-Fi (own AP):",
-                          l_ssid, l_pass, l_ip, "",
+  static char v_ssid[22], v_ip[22], v_pass[22];
+  snprintf(v_ssid, sizeof v_ssid, "%s", (sta_mode ? sta_ssid : ap_ssid).c_str());
+  snprintf(v_ip,   sizeof v_ip,   "%s", ip_str.c_str());
+  snprintf(v_pass, sizeof v_pass, "%s", sta_mode ? "aquamilk.local" : ap_pass.c_str());
+
+  const char* keys[] = { "Wi-Fi", sta_mode ? "Host" : "Password", "Address", "Model" };
+  const char* vals[] = { v_ssid, v_pass, v_ip,
 #if MODEL_IS_PLACEHOLDER
-                          "model: PLACEHOLDER"
+                         "none"
 #else
-                          "model: ready"
+                         "ready"
 #endif
-                        };
-  dispLines(lines, sizeof(lines) / sizeof(lines[0]));
+                       };
+  dispKV("Tap to test", keys, vals, sizeof(keys) / sizeof(keys[0]));
 }
 
 static void tftVerdict() {
@@ -218,12 +182,16 @@ static void tftVerdict() {
   snprintf(sub, sizeof sub, "%d%% confident", (int)lroundf(last_v.conf * 100));
   const char* word = last_v.uncertain ? "Uncertain" : CLASS_NAMES[last_v.cls];
   dispBig(word, col, sub);
+  // Confidence as a bar under the word, then the binary headline and the two channels
+  // that moved most — the hierarchy is verdict, certainty, why.
+  dispBar((uint8_t)lroundf(last_v.conf * 100), col, 104);
   Adafruit_ST7735& t = dispTft();
   t.setTextSize(1);
+  t.setTextColor(last_v.uncertain ? AMD_AMBER : col);
+  t.setCursor(4, 118);
+  t.print(last_v.uncertain ? "Retest / flush" : (last_v.adulterated ? "ADULTERATED" : "PURE"));
   t.setTextColor(AMD_MUTED);
-  t.setCursor(4, 112);
-  t.print(last_v.uncertain ? "retest / flush" : (last_v.adulterated ? "ADULTERATED" : "PURE"));
-  t.setCursor(4, 126);
+  t.setCursor(4, 134);
   t.print(reason);
 }
 
@@ -453,9 +421,8 @@ static void routes() {
   });
 
   server.on("/api/log", HTTP_GET, [](AsyncWebServerRequest* q) {
-    String s;
-    logToJson(s);
-    q->send(200, "application/json", s);
+    if (LittleFS.exists(LOG_PATH)) q->send(LittleFS, LOG_PATH, "text/csv");
+    else                           q->send(200, "text/csv", "");
   });
 
   server.on("/api/test", HTTP_POST, [](AsyncWebServerRequest* q) {
@@ -527,7 +494,7 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* c, AwsEventType typ
                       void*, uint8_t*, size_t) {
   if (type == WS_EVT_CONNECT) {
     JsonDocument d;
-    fillReading(d);
+    readingJson(d);
     String s;
     serializeJson(d, s);
     c->text(s);

@@ -6,6 +6,11 @@
 <title>Aqua Milk Detect — Milk purity in seconds</title>
 <meta name="description" content="Low-cost IoT + edge-ML tester that classifies milk as pure, water-, detergent- or starch-adulterated in seconds.">
 <link rel="icon" href="./logo.svg">
+<!-- Two links, not an @import inside app.css: @import chains the requests (tokens.css
+     is only discovered after app.css parses) and lets the two files be cached
+     independently, where a stale token file silently collapses every radius and shadow
+     to nothing. -->
+<link rel="stylesheet" href="./design/tokens.css">
 <link rel="stylesheet" href="./app.css">
 <!-- esp-web-tools is vendored in web/vendor/esp-web-tools (v10.4.0, Apache-2.0, its
      LICENSE sits beside it). Loading it from a CDN meant the Flash page depended on
@@ -17,6 +22,11 @@
 <script type="module" src="./vendor/esp-web-tools/install-button.js"></script>
 </head>
 <body>
+
+<!-- What the glass refracts. Four drifting colour fields plus fine grain; purely
+     decorative, so aria-hidden and behind everything at z-index -2/-1. -->
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<div class="grain" aria-hidden="true"></div>
 
 <nav>
   <span class="brand">
@@ -34,7 +44,7 @@
 <section id="home">
   <div class="hero">
     <svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4c7.2 8.4 12.4 15.2 12.4 22a12.4 12.4 0 1 1-24.8 0C11.6 19.2 16.8 12.4 24 4z" fill="none" stroke="#0FB5C9" stroke-width="2.6" stroke-linejoin="round"/><path d="M15.4 28.2c2.9 1.9 5.3-1.9 8.6-.2s4.7 1.5 6.6.2" fill="none" stroke="#0FB5C9" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="35.6" r="1.6" fill="#0FB5C9"/></svg>
-    <h1>Milk purity<br>in seconds.</h1>
+    <h1>Milk purity<br><span class="gradient-text">in seconds.</span></h1>
     <p class="lead">A pocket-size tester reads pH, conductivity, turbidity, colour, temperature and density,
       then an on-device SVM calls the sample <b>pure</b>, <b>water</b>, <b>detergent</b> or <b>starch</b> —
       and flushes itself clean for the next one.</p>

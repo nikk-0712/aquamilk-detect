@@ -36,6 +36,7 @@
 
 #include <ArduinoJson.h>
 #include <sensors.h>
+#include <serialio.h>
 #include <display.h>
 
 #define FW_NAME "02_collection"
@@ -44,30 +45,13 @@
 enum State { IDLE, AVERAGING, FLUSHING };
 static State    state = IDLE;
 static uint16_t sample_count = 0;
-static char     rx[256];
-static uint16_t rx_len = 0;
 static uint32_t t_stream = 0, t_tft = 0;
 
 // ---------------------------------------------------------------------- output
-static void sendAck(const char* cmd, bool ok, const char* msg) {
-  JsonDocument d;
-  d["t"] = "ack"; d["cmd"] = cmd; d["ok"] = ok; d["msg"] = msg;
-  serializeJson(d, Serial);
-  Serial.println();
-}
-
 static void sendReading() {
-  const Reading& r = sensorsLatest();
   JsonDocument d;
-  d["t"]    = "reading";
-  d["ph"]   = r.ph_mv;
-  d["tds"]  = r.tds_mv;
-  d["turb"] = r.turb_mv;
-  d["temp"] = r.temp_c;
-  d["dens"] = r.density_g;
-  d["r"] = r.r; d["g"] = r.g; d["b"] = r.b; d["c"] = r.c;
-  d["ts"] = r.ts_ms;
-  d["count"] = sample_count;
+  readingJson(d);
+  d["count"] = sample_count;          // the UI shows the on-device capture tally
   serializeJson(d, Serial);
   Serial.println();
 }
@@ -142,35 +126,23 @@ static void handleLine(char* line) {
   else sendAck(cmd, false, "unknown cmd");
 }
 
-static void pollSerial() {
-  while (Serial.available()) {
-    char ch = (char)Serial.read();
-    if (ch == '\n' || ch == '\r') {
-      if (rx_len) { rx[rx_len] = 0; handleLine(rx); rx_len = 0; }
-    } else if (rx_len < sizeof(rx) - 1) {
-      rx[rx_len++] = ch;
-    } else {
-      rx_len = 0;
-    }
-  }
-}
-
 // ------------------------------------------------------------------------ TFT
 static void updateTft() {
   const Reading& r = sensorsLatest();
-  static char l_cnt[24], l_ph[24], l_tds[24], l_turb[24], l_t[24], l_sg[24];
-  snprintf(l_cnt,  sizeof l_cnt,  "samples: %u", sample_count);
-  snprintf(l_ph,   sizeof l_ph,   "pH  %6.0f mV", r.ph_mv);
-  snprintf(l_tds,  sizeof l_tds,  "TDS %6.0f mV", r.tds_mv);
-  snprintf(l_turb, sizeof l_turb, "Tur %6.0f mV", r.turb_mv);
-  snprintf(l_t,    sizeof l_t,    "T   %6.1f C", r.temp_c);
-  snprintf(l_sg,   sizeof l_sg,   "SG  %6.3f", specificGravity(r.density_g, r.temp_c));
+  static char v_cnt[10], v_ph[12], v_tds[12], v_turb[12], v_t[12], v_sg[12];
+  snprintf(v_cnt,  sizeof v_cnt,  "%u", sample_count);
+  snprintf(v_ph,   sizeof v_ph,   "%.0f mV", r.ph_mv);
+  snprintf(v_tds,  sizeof v_tds,  "%.0f mV", r.tds_mv);
+  snprintf(v_turb, sizeof v_turb, "%.0f mV", r.turb_mv);
+  snprintf(v_t,    sizeof v_t,    "%.1f C", r.temp_c);
+  snprintf(v_sg,   sizeof v_sg,   "%.3f", specificGravity(r.density_g, r.temp_c));
 
   const char* status = state == AVERAGING ? "Capturing..."
                      : state == FLUSHING  ? "Flushing..."
                                           : "Ready - hit Capture";
-  const char* lines[] = { "Collection mode", status, l_cnt, "", l_ph, l_tds, l_turb, l_t, l_sg };
-  dispLines(lines, sizeof(lines) / sizeof(lines[0]));
+  const char* keys[] = { "Samples", "pH", "TDS", "Turbidity", "Temp", "Density" };
+  const char* vals[] = { v_cnt, v_ph, v_tds, v_turb, v_t, v_sg };
+  dispKV(status, keys, vals, sizeof(keys) / sizeof(keys[0]));
 }
 
 // ---------------------------------------------------------------------- setup
@@ -190,7 +162,7 @@ void setup() {
 
 void loop() {
   sensorsUpdate();          // also feeds the averager and runs the pump timer
-  pollSerial();
+  serialPoll(handleLine);
 
   switch (state) {
     case AVERAGING:

@@ -2,22 +2,48 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Aqua Milk Detect</title>
 <style>
+/* Same design language as web/design/tokens.css — aqua-teal on liquid glass. Inlined
+   because this page has to be one self-contained gzipped file in PROGMEM. Dark first:
+   glass needs a dark, coloured backdrop to read as glass. */
 :root{--accent:#0FB5C9;--accent-d:#0A8FA3;--green:#34C759;--red:#FF3B30;--amber:#FF9F0A;
---bg:#F5F7FA;--card:#FFF;--text:#0B0F14;--muted:#6B7280;--line:rgba(0,0,0,.08);--r:18px}
-@media(prefers-color-scheme:dark){:root{--bg:#0B0F14;--card:#161B22;--text:#F5F7FA;--muted:#9AA4B2;--line:rgba(255,255,255,.1)}}
+--bg:#07090C;--text:#F5F5F7;--muted:#A1A1A6;--line:rgba(255,255,255,.1);--r:26px;
+--glass:linear-gradient(158deg,rgba(255,255,255,.11),rgba(255,255,255,.04));
+--glass-s:linear-gradient(158deg,rgba(255,255,255,.17),rgba(255,255,255,.07));
+--stroke:rgba(255,255,255,.16);--hi:rgba(255,255,255,.55);--aop:.5;
+--ease:cubic-bezier(.4,0,.2,1)}
+@media(prefers-color-scheme:light){:root{--bg:#EEF1F5;--text:#1D1D1F;--muted:#6E6E73;
+--line:rgba(0,0,0,.1);--glass:linear-gradient(158deg,rgba(255,255,255,.78),rgba(255,255,255,.55));
+--glass-s:linear-gradient(158deg,rgba(255,255,255,.92),rgba(255,255,255,.7));
+--stroke:rgba(0,0,0,.1);--hi:rgba(255,255,255,.95);--aop:.35}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0 auto;padding:16px;font:16px/1.45 -apple-system,"SF Pro Text",system-ui,sans-serif;
-background:var(--bg);color:var(--text);max-width:640px}
+body{margin:0 auto;padding:16px;font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+background:var(--bg);color:var(--text);max-width:640px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+/* the backdrop the glass refracts */
+.aurora{position:fixed;inset:-20vmax;z-index:-2;pointer-events:none;opacity:var(--aop);
+filter:blur(64px) saturate(140%)}
+.aurora i{position:absolute;width:52vmax;height:52vmax;border-radius:50%;mix-blend-mode:screen;
+animation:drift 38s var(--ease) infinite alternate}
+.aurora i:nth-child(1){background:radial-gradient(circle,#0FB5C9,transparent 62%);top:-6vmax;left:-4vmax}
+.aurora i:nth-child(2){background:radial-gradient(circle,#1E6BFF,transparent 62%);top:6vmax;right:-8vmax;animation-duration:46s;animation-delay:-9s}
+.aurora i:nth-child(3){background:radial-gradient(circle,#12E1A8,transparent 62%);bottom:-8vmax;left:10vmax;animation-duration:54s;animation-delay:-20s}
+@keyframes drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(6vmax,-5vmax,0) scale(1.16)}}
+@media(prefers-color-scheme:light){.aurora i{mix-blend-mode:normal}}
 h1{font-size:20px;letter-spacing:-.02em;margin:0}
 h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px}
 header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--red);margin-left:auto;transition:background .3s}
 .dot.on{background:var(--green)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:14px;
-box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.04)}
+.card{position:relative;isolation:isolate;background:var(--glass);border:1px solid var(--stroke);
+border-radius:var(--r);padding:20px;margin-bottom:14px;
+backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);
+box-shadow:0 1px 0 var(--hi) inset,0 10px 30px rgba(0,0,0,.45)}
+/* specular sweep — the lit edge that separates glass from a tinted box */
+.card::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none;
+background:linear-gradient(118deg,var(--hi) 0%,transparent 26%,transparent 74%,rgba(255,255,255,.1) 100%);
+opacity:.4}
 .verdict{display:flex;align-items:center;gap:18px}
 .vtext{flex:1;min-width:0}
-.vword{font-size:32px;font-weight:650;letter-spacing:-.03em;transition:color .25s}
+.vword{font-size:clamp(28px,8vw,38px);font-weight:700;letter-spacing:-.03em;line-height:1.05;transition:color .25s}
 .vsub{color:var(--muted);font-size:14px;margin-top:2px}
 .reveal{animation:pop .32s cubic-bezier(.2,1.3,.4,1)}
 @keyframes pop{from{transform:scale(.94);opacity:.4}to{transform:scale(1);opacity:1}}
@@ -27,10 +53,19 @@ box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.04)}
 .ring .fg{transition:stroke-dashoffset .5s ease,stroke .25s}
 .ring text{font:600 20px -apple-system,system-ui;fill:var(--text);text-anchor:middle}
 .row{display:flex;gap:10px;flex-wrap:wrap}
-button{flex:1;min-width:130px;min-height:48px;border:0;border-radius:14px;background:var(--accent);color:#fff;
-font:600 16px -apple-system,system-ui;cursor:pointer;transition:transform .15s,opacity .2s}
-button.sec{background:transparent;color:var(--accent);border:1px solid var(--accent)}
-button:active{transform:scale(.97)}button:disabled{opacity:.45;cursor:default}
+button{flex:1;min-width:130px;min-height:48px;border:1px solid var(--stroke);border-radius:980px;color:#fff;
+background:linear-gradient(158deg,rgba(255,255,255,.16),rgba(255,255,255,.06)),linear-gradient(158deg,var(--accent),var(--accent-d));
+font:600 16px -apple-system,system-ui;cursor:pointer;
+box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 8px 22px rgba(0,0,0,.35);
+transition:transform .15s var(--ease),box-shadow .3s var(--ease),filter .3s var(--ease),opacity .2s}
+button.sec{background:var(--glass);color:var(--text);
+backdrop-filter:blur(18px) saturate(170%);-webkit-backdrop-filter:blur(18px) saturate(170%);
+box-shadow:0 1px 0 var(--hi) inset,0 8px 20px rgba(0,0,0,.35)}
+button:hover{transform:translateY(-2px);filter:saturate(115%) brightness(1.04);
+box-shadow:0 1px 0 rgba(255,255,255,.55) inset,0 12px 28px rgba(15,181,201,.38)}
+button:active{transform:translateY(0) scale(.97)}
+button:disabled{opacity:.38;cursor:default;transform:none;box-shadow:none;filter:grayscale(.4)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px}
 .k{color:var(--muted);font-size:12px}.v{font-size:17px;font-variant-numeric:tabular-nums}
 .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:4px}
@@ -46,11 +81,17 @@ details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14p
 details summary::-webkit-details-marker{display:none}
 .warn{background:rgba(255,159,10,.14);border:1px solid var(--amber);
 border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:14px}
-.tabs{display:flex;gap:4px;background:var(--line);padding:3px;border-radius:12px;margin-bottom:14px}
-.tabs button{background:transparent;color:var(--text);min-height:36px;min-width:0;font-size:14px;border-radius:9px}
-.tabs button[aria-selected=true]{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.tabs{display:flex;gap:2px;background:rgba(255,255,255,.06);padding:4px;border-radius:980px;margin-bottom:14px;
+border:1px solid var(--stroke);backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%)}
+.tabs button{background:none;color:var(--muted);min-height:38px;min-width:0;font-size:14px;
+border:0;border-radius:980px;box-shadow:none}
+.tabs button:hover{color:var(--text);background:rgba(255,255,255,.08);transform:none;filter:none;box-shadow:none}
+.tabs button[aria-selected=true]{color:var(--text);background:var(--glass-s);
+box-shadow:0 1px 0 var(--hi) inset,0 4px 14px rgba(0,0,0,.32)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head><body>
+
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
 
 <header>
 <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c3.6 4.2 6.2 7.6 6.2 11a6.2 6.2 0 1 1-12.4 0c0-3.4 2.6-6.8 6.2-11z" fill="none" stroke="#0FB5C9" stroke-width="1.7"/><path d="M8.6 14.4c1.4.9 2.6-.9 4-.1s2.3.7 3 .1" fill="none" stroke="#0FB5C9" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -185,7 +226,10 @@ $("csv").onclick=()=>{const rows=[["uptime_ms","verdict","confidence","ph_mv","t
   const b=new Blob([rows.map(r=>r.join(",")).join("\n")],{type:"text/csv"});
   const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="aquamilk-log.csv";a.click();};
 
-function loadLog(){fetch("/api/log").then(r=>r.json()).then(j=>{logRows=j.rows||[];
+// /api/log is the raw log file: ms,class,conf,ph,tds,turb,sg,temp per line.
+function loadLog(){fetch("/api/log").then(r=>r.text()).then(t=>{
+  logRows=t.trim().split("\n").filter(Boolean).map(l=>{const c=l.split(",");
+    return {ms:+c[0],cls:c[1],conf:+c[2],ph:c[3],tds:c[4],turb:c[5],sg:c[6],temp:c[7]};});
   $("log").innerHTML=logRows.slice().reverse().slice(0,200).map(r=>
    `<tr><td>${up(r.ms)}</td><td>${r.cls}</td><td>${Math.round(r.conf*100)}%</td><td>${(+r.sg).toFixed(3)}</td></tr>`)
    .join("")||`<tr><td colspan="4" class="k">Empty</td></tr>`;})

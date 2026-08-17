@@ -73,7 +73,9 @@ static void trimmed_stats(const float* src, uint16_t n, float& mean, float& sd) 
   uint16_t lo = cut, hi = n - cut;              // [lo, hi)
   if (hi <= lo) { lo = 0; hi = n; }
   uint16_t m = hi - lo;
-  mean = mean_of(tmp + lo, m);
+  float sum = 0;
+  for (uint16_t i = lo; i < hi; i++) sum += tmp[i];
+  mean = sum / m;
   float acc = 0;
   for (uint16_t i = lo; i < hi; i++) acc += (tmp[i] - mean) * (tmp[i] - mean);
   sd = (m > 1) ? sqrtf(acc / (m - 1)) : 0.0f;

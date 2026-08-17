@@ -23,4 +23,13 @@ void dispBegin(const char* title);
 void dispTitle(const char* title);                     // small aqua header line
 void dispLines(const char* const* lines, uint8_t n);   // body text, one row each
 void dispBig(const char* word, uint16_t color, const char* sub);
+
+// Label/value grid: labels muted on the left, values right-aligned in white, so the
+// numbers line up in a column instead of being padded by hand at every call site.
+// status is an optional line above the grid (nullptr to skip).
+void dispKV(const char* status, const char* const* keys, const char* const* vals, uint8_t n);
+
+// Horizontal fill bar, 0-100, drawn at row y. Used for the verdict's confidence.
+void dispBar(uint8_t pct, uint16_t color, int16_t y);
+
 Adafruit_ST7735& dispTft();                            // escape hatch for custom screens

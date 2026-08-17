@@ -1,125 +1,343 @@
-/* app.css — Aqua Milk Detect web app. Design language: PROJECT_CONTEXT.md §9. */
-@import url("./design/tokens.css");
+/* app.css — Aqua Milk Detect. Liquid-glass material over a live aurora backdrop.
+   Tokens live in design/tokens.css, which index.html links itself (not @imported — see
+   the comment there).
+
+   The material, in one place, so every component can reuse it:
+     .glass  = translucent fill + backdrop blur + 1px stroke + inset rim light
+     ::before = diagonal specular sweep (the "wet" look)
+     ::after  = pointer-tracked highlight, driven by --mx/--my from app.js
+   Text always sits on a blurred, tinted layer rather than raw gradient, so contrast
+   holds up: body text is #F5F5F7 on dark, #1D1D1F on light. */
 
 * { box-sizing: border-box; }
 
-html, body { height: 100%; }
+html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
-  font: 17px/1.5 var(--font);
+  min-height: 100%;
+  font: 17px/1.55 var(--font);
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
+
+/* ------------------------------------------------------------------ backdrop */
+/* Four blurred colour fields drifting behind everything. This is what the glass
+   refracts; without it, backdrop-filter has nothing to work with and every panel
+   reads as a flat grey card. Fixed + GPU-only transforms, so scrolling stays smooth. */
+.aurora { position: fixed; inset: -20vmax; z-index: -2; pointer-events: none;
+  opacity: var(--aurora-opacity); filter: blur(70px) saturate(140%); }
+.aurora i {
+  position: absolute; display: block; border-radius: 50%;
+  width: 52vmax; height: 52vmax;
+  mix-blend-mode: screen;
+  animation: drift 34s var(--ease) infinite alternate;
+}
+.aurora i:nth-child(1) { background: radial-gradient(circle at 50% 50%, var(--aurora-1), transparent 62%);
+  top: -6vmax; left: -4vmax; animation-duration: 34s; }
+.aurora i:nth-child(2) { background: radial-gradient(circle at 50% 50%, var(--aurora-2), transparent 62%);
+  top: 8vmax; right: -8vmax; left: auto; animation-duration: 44s; animation-delay: -8s; }
+.aurora i:nth-child(3) { background: radial-gradient(circle at 50% 50%, var(--aurora-3), transparent 62%);
+  bottom: -10vmax; left: 12vmax; top: auto; animation-duration: 52s; animation-delay: -18s; }
+.aurora i:nth-child(4) { background: radial-gradient(circle at 50% 50%, var(--aurora-4), transparent 62%);
+  bottom: 2vmax; right: 6vmax; top: auto; left: auto; animation-duration: 40s; animation-delay: -26s; }
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(6vmax, -5vmax, 0) scale(1.18); }
+}
+@media (prefers-color-scheme: light) { .aurora i { mix-blend-mode: normal; } }
+
+/* Fine grain over the gradients. Without it large blurs band visibly and read cheap. */
+.grain { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora i { animation: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* ------------------------------------------------------------- the material */
+.glass {
+  position: relative;
+  isolation: isolate;
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border: 1px solid var(--glass-stroke);
+  box-shadow: var(--lift-1);
+}
+/* specular sweep: bright at the top-left corner, fading out, catching again at the far
+   edge — the thing that makes glass look lit rather than tinted */
+.glass::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(118deg, var(--glass-sheen) 0%, transparent 26%,
+                    transparent 74%, rgba(255, 255, 255, .10) 100%);
+  opacity: .55;
+}
+/* pointer-tracked highlight; --mx/--my are set by app.js on hover */
+.glass::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1;
+  pointer-events: none; opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%),
+                              var(--accent-soft), transparent 70%);
+}
+.glass:hover::after { opacity: 1; }
 
 /* ------------------------------------------------------------------ layout */
-.wrap { max-width: 980px; margin: 0 auto; padding: 0 24px 80px; }
+.wrap { max-width: 1020px; margin: 0 auto; padding: 0 var(--space-6) var(--space-24); }
 
+/* Floating glass capsule, inset from the edges like an iOS 26 toolbar. */
 nav {
-  position: sticky; top: 0; z-index: 20;
-  display: flex; align-items: center; gap: 24px;
-  padding: 14px 24px;
-  background: var(--card-blur);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid var(--line);
+  position: sticky; top: var(--space-3); z-index: 20;
+  display: flex; align-items: center; gap: var(--space-6);
+  width: calc(100% - var(--space-6) * 2);
+  max-width: 1020px;
+  margin: var(--space-3) auto var(--space-8);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--r-full);
+  background: var(--glass-strong);
+  backdrop-filter: blur(26px) saturate(200%);
+  -webkit-backdrop-filter: blur(26px) saturate(200%);
+  border: 1px solid var(--glass-stroke);
+  box-shadow: var(--lift-1);
 }
-nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -.01em; }
-nav .brand svg { width: 24px; height: 24px; }
-nav .links { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+nav .brand { display: flex; align-items: center; gap: var(--space-2);
+  font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+nav .brand svg { width: 22px; height: 22px; }
+nav .links { display: flex; gap: 2px; margin-left: auto; flex-wrap: wrap; }
 nav a {
-  padding: 7px 14px; border-radius: 980px; text-decoration: none;
+  padding: 8px 15px; border-radius: var(--r-full); text-decoration: none;
   color: var(--text-mut); font-size: 15px; font-weight: 500;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease);
 }
-nav a:hover { color: var(--text); background: var(--line); }
-nav a[aria-current="page"] { color: #fff; background: var(--accent); }
+nav a:hover { color: var(--text); background: rgba(255, 255, 255, .10); }
+nav a[aria-current="page"] {
+  color: var(--text); background: var(--glass-strong);
+  box-shadow: 0 1px 0 var(--glass-hi) inset, 0 4px 14px rgba(0, 0, 0, .3);
+}
 
 section[hidden] { display: none; }
 
 /* -------------------------------------------------------------------- type */
-h1 { font-size: clamp(34px, 6vw, 56px); line-height: 1.05; letter-spacing: -.03em; font-weight: 650; margin: 0 0 12px; }
-h2 { font-size: 28px; letter-spacing: -.02em; font-weight: 600; margin: 48px 0 6px; }
-h3 { font-size: 19px; letter-spacing: -.01em; font-weight: 600; margin: 0 0 4px; }
-.lead { font-size: 20px; color: var(--text-mut); margin: 0 0 32px; max-width: 62ch; }
+h1 {
+  font-size: clamp(2.6rem, 5.4vw + 1rem, 5rem);
+  line-height: 1.02; letter-spacing: -.03em; font-weight: 700;
+  margin: 0 0 var(--space-4);
+}
+h2 { font-size: clamp(1.6rem, 2vw + .6rem, 2.2rem); letter-spacing: -.022em;
+  font-weight: 650; margin: var(--space-16) 0 var(--space-3); }
+h3 { font-size: 19px; letter-spacing: -.012em; font-weight: 600; margin: 0 0 var(--space-1); }
+.lead { font-size: clamp(1.08rem, .5vw + 1rem, 1.35rem); color: var(--text-mut);
+  margin: 0 0 var(--space-8); max-width: 60ch; line-height: 1.5; }
 .muted { color: var(--text-mut); }
 .small { font-size: 14px; }
 code, .mono { font-family: var(--mono); font-size: .92em; }
 
+.gradient-text {
+  background: linear-gradient(120deg, #6FF1FF 0%, var(--accent) 42%, #7A5CFF 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+
 /* ------------------------------------------------------------------- cards */
 .card {
-  background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg);
-  padding: 24px; box-shadow: var(--shadow-1), var(--shadow-2);
+  border-radius: var(--r-2xl);
+  padding: var(--space-6);
+  /* inherits the material */
+  position: relative; isolation: isolate;
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border: 1px solid var(--glass-stroke);
+  box-shadow: var(--lift-1);
 }
-.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
-a.card { text-decoration: none; color: inherit; transition: transform var(--dur) var(--ease); display: block; }
-a.card:hover { transform: translateY(-3px); }
-.card + .card { margin-top: 16px; }
-.stack { display: grid; gap: 16px; }
-.hero { padding: 72px 0 24px; }
-.hero .mark { width: 84px; height: 84px; margin-bottom: 20px; }
+.card::before, .card::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1;
+  pointer-events: none;
+}
+.card::before {
+  background: linear-gradient(118deg, var(--glass-sheen) 0%, transparent 26%,
+                              transparent 74%, rgba(255, 255, 255, .10) 100%);
+  opacity: .5;
+}
+.card::after {
+  opacity: 0; transition: opacity var(--dur) var(--ease);
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 0%),
+                              var(--accent-soft), transparent 70%);
+}
+.card:hover::after { opacity: 1; }
+
+.cards { display: grid; gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)); }
+a.card { text-decoration: none; color: inherit; display: block;
+  transition: transform var(--dur) var(--spring), box-shadow var(--dur) var(--ease); }
+a.card:hover { transform: translateY(-6px) scale(1.012); box-shadow: var(--lift-2); }
+.card + .card { margin-top: var(--space-4); }
+.stack { display: grid; gap: var(--space-4); }
+
+.hero { padding: var(--space-16) 0 var(--space-8); }
+.hero .mark { width: 84px; height: 84px; margin-bottom: var(--space-6);
+  filter: drop-shadow(0 6px 22px var(--accent-glow)); }
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(26px) scale(.985); filter: blur(6px); }
+  to   { opacity: 1; transform: none; filter: none; }
+}
+.hero > *, #home .cards > * { animation: riseIn var(--dur-slow) var(--ease-out) backwards; }
+.hero .mark { animation-delay: 0ms; }
+.hero h1    { animation-delay: 70ms; }
+.hero .lead { animation-delay: 140ms; }
+#home .cards > *:nth-child(1) { animation-delay: 200ms; }
+#home .cards > *:nth-child(2) { animation-delay: 260ms; }
+#home .cards > *:nth-child(3) { animation-delay: 320ms; }
+#home .cards > *:nth-child(4) { animation-delay: 380ms; }
+@media (prefers-reduced-motion: reduce) { .hero > *, #home .cards > * { animation: none; } }
 
 /* ----------------------------------------------------------------- controls */
+/* Glass capsule buttons. The primary is tinted glass, not flat fill, so it belongs to
+   the same material as everything else. */
 button, .btn {
-  appearance: none; border: 0; border-radius: 980px; padding: 13px 22px;
-  background: var(--accent); color: #fff; font: 600 16px var(--font); cursor: pointer;
-  min-height: 48px; transition: transform 120ms var(--ease), opacity var(--dur);
+  appearance: none; cursor: pointer;
+  position: relative; isolation: isolate; overflow: hidden;
+  padding: 13px 24px; min-height: 46px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--glass-stroke);
+  background:
+    linear-gradient(158deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .06)),
+    linear-gradient(158deg, var(--accent), var(--accent-strong));
+  color: #fff; font: 600 16px var(--font);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset, 0 8px 22px rgba(0, 0, 0, .35);
+  transition: transform var(--dur-fast) var(--spring), box-shadow var(--dur) var(--ease),
+              filter var(--dur) var(--ease), opacity var(--dur) var(--ease);
 }
-button:hover { background: var(--accent-strong); }
-button:active { transform: scale(.975); }
-button:disabled { opacity: .4; cursor: default; }
-button.ghost { background: transparent; color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-button.ghost:hover { background: rgba(15, 181, 201, .1); }
-button.small { padding: 9px 16px; min-height: 40px; font-size: 14px; }
-button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+button:hover { transform: translateY(-2px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .55) inset, 0 12px 30px var(--accent-glow);
+  filter: saturate(115%) brightness(1.04); }
+button:active { transform: translateY(0) scale(.978); }
+button:disabled { opacity: .38; cursor: default; transform: none;
+  box-shadow: none; filter: grayscale(.4); }
 
-.seg { display: inline-flex; padding: 3px; gap: 2px; background: var(--line); border-radius: var(--r-sm); }
+button.ghost {
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  color: var(--text);
+  box-shadow: var(--lift-1);
+}
+button.ghost:hover { background: var(--glass-strong); filter: none;
+  box-shadow: 0 1px 0 var(--glass-hi) inset, 0 12px 26px rgba(0, 0, 0, .38); }
+button.small { padding: 9px 17px; min-height: 40px; font-size: 14px; }
+
+:is(button, a, input, select):focus-visible { outline: 2px solid var(--accent);
+  outline-offset: 3px; }
+.row { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center; }
+
+/* Segmented control: a glass trough with a glass thumb. */
+.seg {
+  display: inline-flex; padding: 4px; gap: 2px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, .06);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid var(--glass-stroke);
+}
 .seg button {
-  background: transparent; color: var(--text); border-radius: 9px; padding: 8px 16px;
-  min-height: 38px; font-size: 15px; font-weight: 500;
+  background: transparent; color: var(--text-mut); border: 0; box-shadow: none;
+  border-radius: var(--r-full); padding: 8px 17px; min-height: 38px;
+  font-size: 15px; font-weight: 500;
 }
-.seg button:hover { background: rgba(15, 181, 201, .12); }
-.seg button[aria-pressed="true"] { background: var(--card); box-shadow: var(--shadow-1); }
+.seg button:hover { color: var(--text); background: rgba(255, 255, 255, .08);
+  transform: none; filter: none; box-shadow: none; }
+.seg button[aria-pressed="true"] {
+  color: var(--text); background: var(--glass-strong);
+  box-shadow: 0 1px 0 var(--glass-hi) inset, 0 4px 14px rgba(0, 0, 0, .32);
+}
 
-label { display: block; font-size: 14px; color: var(--text-mut); margin: 16px 0 6px; }
+label { display: block; font-size: 14px; color: var(--text-mut);
+  margin: var(--space-4) 0 var(--space-1); }
 input[type="text"], input[type="number"] {
-  width: 100%; padding: 13px 14px; font: 16px var(--font); color: var(--text);
-  background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--r-sm);
+  width: 100%; padding: 13px 15px; min-height: 46px; font: 16px var(--font);
+  color: var(--text);
+  background: rgba(255, 255, 255, .06);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid var(--glass-stroke); border-radius: var(--r-sm);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+              background var(--dur) var(--ease);
+}
+input::placeholder { color: var(--text-mut); }
+input[type="text"]:focus, input[type="number"]:focus {
+  outline: none; border-color: var(--accent);
+  background: rgba(255, 255, 255, .10);
+  box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
 /* ------------------------------------------------------------------ readouts */
-.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-.metric .k { font-size: 13px; color: var(--text-mut); }
-.metric .v { font-size: 26px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.metric .v small { font-size: 14px; color: var(--text-mut); letter-spacing: 0; }
+.grid { display: grid; gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); }
+/* each metric is its own small glass tile — the bento look */
+.metric {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid var(--glass-stroke);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .18) inset;
+}
+.metric .k { font-size: 12px; color: var(--text-mut); text-transform: uppercase;
+  letter-spacing: .05em; }
+.metric .v { font-size: 27px; letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+  line-height: 1.25; }
+.metric .v small { font-size: 13px; color: var(--text-mut); letter-spacing: 0; }
 
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
-th, td { padding: 9px 8px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
-th { font-size: 12px; font-weight: 500; color: var(--text-mut); text-transform: uppercase; letter-spacing: .05em; }
+th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--line);
+  white-space: nowrap; }
+th { font-size: 12px; font-weight: 500; color: var(--text-mut);
+  text-transform: uppercase; letter-spacing: .05em; }
 td { font-variant-numeric: tabular-nums; }
+tr:last-child td { border-bottom: 0; }
 .scroll { overflow-x: auto; }
 
-.pill { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 980px;
-  background: var(--line); font-size: 13px; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--adulter); }
+.pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px;
+  border-radius: var(--r-full); font-size: 13px;
+  background: rgba(255, 255, 255, .07); border: 1px solid var(--glass-stroke); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--adulter);
+  box-shadow: 0 0 10px currentColor; transition: background var(--dur) var(--ease); }
 .dot.on { background: var(--pure); }
 .ok  { color: var(--pure); }
 .bad { color: var(--adulter); }
 
 .note {
-  border: 1px solid var(--uncertain); border-radius: var(--r-md);
-  background: rgba(255, 159, 10, .12);
-  padding: 14px 16px; font-size: 15px;
+  border-radius: var(--r-md); padding: var(--space-3) var(--space-4); font-size: 15px;
+  background: linear-gradient(158deg, rgba(255, 159, 10, .20), rgba(255, 159, 10, .08));
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255, 159, 10, .45);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .25) inset;
 }
-.counts { display: flex; gap: 10px; flex-wrap: wrap; }
+.counts { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .counts .pill b { font-variant-numeric: tabular-nums; }
 
-esp-web-install-button { display: block; margin-top: 16px; }
+esp-web-install-button { display: block; margin-top: var(--space-4); }
 /* Until the custom element upgrades it has no shadow root, so every <span slot="…">
    inside it renders at once — "Install", "Use desktop Chrome", "Needs HTTPS" all
-   stacked. Hide the element until it is defined; app.js shows a fallback notice if the
-   module never loads (blocked CDN, offline, locked-down network). */
+   stacked. Hide it until defined; app.js explains if the module never loads. */
 esp-web-install-button:not(:defined) { display: none; }
-footer { padding: 40px 24px; text-align: center; color: var(--text-mut); font-size: 13px; }
+
+footer { padding: var(--space-12) var(--space-6); text-align: center;
+  color: var(--text-mut); font-size: 13px; }
+
+/* Phones: blur is the expensive part, so ease it off a little and drop the aurora
+   scale animation to keep scrolling at 60fps. */
+@media (max-width: 640px) {
+  :root { --glass-blur: 16px; }
+  .aurora { filter: blur(56px) saturate(135%); }
+  nav { gap: var(--space-3); }
+}

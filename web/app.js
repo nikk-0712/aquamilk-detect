@@ -34,6 +34,18 @@ if (!supported()) {
     : "<b>This browser cannot talk to the device.</b> Web Serial and browser flashing exist only in desktop Chrome and Edge. Everything else on this site still works.";
 }
 
+// ------------------------------------------------------------ glass highlight
+// Liquid Glass reacts to the pointer. CSS cannot read cursor position, so feed it in:
+// each glass surface gets --mx/--my and its ::after paints a soft specular bloom there.
+// Delegated listener, percentages only, no layout reads beyond the hovered element.
+addEventListener("pointermove", e => {
+  const el = e.target.closest?.(".card, .glass");
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  el.style.setProperty("--mx", `${((e.clientX - r.left) / r.width) * 100}%`);
+  el.style.setProperty("--my", `${((e.clientY - r.top) / r.height) * 100}%`);
+}, { passive: true });
+
 // ------------------------------------------------------- flashing availability
 // esp-web-tools is vendored (web/vendor/esp-web-tools) so there is no CDN to fail,
 // but the module can still be blocked by an extension or fail to parse in an older

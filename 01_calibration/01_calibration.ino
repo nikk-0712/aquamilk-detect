@@ -44,26 +44,15 @@
 
 #include <ArduinoJson.h>
 #include <sensors.h>
+#include <serialio.h>
 #include <display.h>
 
 #define FW_NAME "01_calibration"
 #define FW_VER  "1.0.0"
 
-static char     rx[256];
-static uint16_t rx_len   = 0;
 static uint32_t t_stream = 0, t_tft = 0;
 
 // ---------------------------------------------------------------------- output
-static void sendAck(const char* cmd, bool ok, const char* msg) {
-  JsonDocument d;
-  d["t"] = "ack";
-  d["cmd"] = cmd;
-  d["ok"] = ok;
-  d["msg"] = msg;
-  serializeJson(d, Serial);
-  Serial.println();
-}
-
 static void sendCal() {
   JsonDocument d;
   d["t"] = "cal";
@@ -91,26 +80,8 @@ static void sendCal() {
 }
 
 static void sendReading() {
-  const Reading& r = sensorsLatest();
   JsonDocument d;
-  d["t"]    = "reading";
-  d["ph"]   = r.ph_mv;
-  d["tds"]  = r.tds_mv;
-  d["turb"] = r.turb_mv;
-  d["temp"] = r.temp_c;
-  d["dens"] = r.density_g;
-  d["r"] = r.r; d["g"] = r.g; d["b"] = r.b; d["c"] = r.c;
-  d["ts"] = r.ts_ms;
-  JsonObject calc = d["calc"].to<JsonObject>();
-  float ph = phFromMv(r.ph_mv);
-  if (isnan(ph)) calc["ph"] = nullptr; else calc["ph"] = ph;
-  calc["ppm"] = tdsPpm(r.tds_mv, r.temp_c);
-  calc["ntu"] = turbidityNtu(r.turb_mv);
-  calc["sg"]  = specificGravity(r.density_g, r.temp_c);
-  JsonObject ok = d["ok"].to<JsonObject>();
-  ok["temp"]  = r.ok_temp;
-  ok["color"] = r.ok_color;
-  ok["scale"] = r.ok_scale;
+  readingJson(d);
   serializeJson(d, Serial);
   Serial.println();
 }
@@ -205,34 +176,23 @@ static void handleLine(char* line) {
   else                                      sendAck(cmd, false, "unknown cmd");
 }
 
-static void pollSerial() {
-  while (Serial.available()) {
-    char ch = (char)Serial.read();
-    if (ch == '\n' || ch == '\r') {
-      if (rx_len) { rx[rx_len] = 0; handleLine(rx); rx_len = 0; }
-    } else if (rx_len < sizeof(rx) - 1) {
-      rx[rx_len++] = ch;
-    } else {
-      rx_len = 0;                              // overlong line: drop it
-    }
-  }
-}
-
 // ------------------------------------------------------------------------ TFT
 static void updateTft() {
   const Reading& r = sensorsLatest();
-  static char l0[24], l1[24], l2[24], l3[24], l4[24], l5[24];
+  static char v_ph[14], v_cal[14], v_tds[14], v_turb[14], v_t[14], v_sg[14];
   float ph = phFromMv(r.ph_mv);
-  snprintf(l0, sizeof l0, "pH  %6.0f mV", r.ph_mv);
-  if (isnan(ph)) snprintf(l1, sizeof l1, "    raw mode");
-  else           snprintf(l1, sizeof l1, "    pH %.2f", ph);
-  snprintf(l2, sizeof l2, "TDS %6.0f ppm", tdsPpm(r.tds_mv, r.temp_c));
-  snprintf(l3, sizeof l3, "Tur %6.0f NTU", turbidityNtu(r.turb_mv));
-  snprintf(l4, sizeof l4, "T   %6.1f C", r.temp_c);
-  snprintf(l5, sizeof l5, "SG  %6.3f", specificGravity(r.density_g, r.temp_c));
-  const char* lines[] = { "Calibration mode", "USB: connect in web app", "", l0, l1, l2, l3, l4, l5,
-                          pumpBusy() ? "flushing..." : "" };
-  dispLines(lines, sizeof(lines) / sizeof(lines[0]));
+  snprintf(v_ph,   sizeof v_ph,   "%.0f mV", r.ph_mv);
+  if (isnan(ph)) snprintf(v_cal, sizeof v_cal, "raw");
+  else           snprintf(v_cal, sizeof v_cal, "%.2f", ph);
+  snprintf(v_tds,  sizeof v_tds,  "%.0f ppm", tdsPpm(r.tds_mv, r.temp_c));
+  snprintf(v_turb, sizeof v_turb, "%.0f NTU", turbidityNtu(r.turb_mv));
+  snprintf(v_t,    sizeof v_t,    "%.1f C", r.temp_c);
+  snprintf(v_sg,   sizeof v_sg,   "%.3f", specificGravity(r.density_g, r.temp_c));
+
+  const char* keys[] = { "pH raw", "pH", "TDS", "Turbidity", "Temp", "Density" };
+  const char* vals[] = { v_ph, v_cal, v_tds, v_turb, v_t, v_sg };
+  dispKV(pumpBusy() ? "Flushing..." : "Calibration mode", keys, vals,
+         sizeof(keys) / sizeof(keys[0]));
 }
 
 // ---------------------------------------------------------------------- setup
@@ -254,7 +214,7 @@ void setup() {
 
 void loop() {
   sensorsUpdate();                             // non-blocking; drives every channel
-  pollSerial();
+  serialPoll(handleLine);
 
   uint32_t now = millis();
   if (now - t_stream >= 200) { t_stream = now; sendReading(); }        // ~5 Hz

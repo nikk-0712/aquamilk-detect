@@ -165,8 +165,10 @@ Test flow: sample in → single tap → TFT shows "Reading…" (average ~3 s) �
 - **Theme:** **light + dark, auto (`prefers-color-scheme`), default light.**
 - **Palette:**
   - Accent (aqua-teal): `#0FB5C9` (darker `#0A8FA3`)
-  - Backgrounds: light `#F5F7FA`, dark `#0B0F14`
-  - Cards/surfaces: light `#FFFFFF`, dark `#161B22`, with subtle translucency/blur (frosted) where tasteful
+  - Backgrounds: light `#F5F5F7`, dark `#000000` — Apple's own neutrals; they read warmer
+    and calmer than the blue-tinted `#F5F7FA` / `#0B0F14` this started with
+  - Text: light `#1D1D1F`, dark `#F5F5F7`; secondary `#86868B` / `#A1A1A6`
+  - Cards/surfaces: light `#FFFFFF`, dark `#1D1D1F`, with subtle translucency/blur (frosted) where tasteful
   - **Result semantics:** Pure = green `#34C759` · Adulterated = red `#FF3B30` · Uncertain = amber `#FF9F0A` (Apple system colors)
 - **Shape & motion:** 16–20 px corner radius, soft layered shadows, 8-pt spacing grid, 200–300 ms ease transitions, gentle spring on the result reveal, circular **confidence ring** (SVG). SF-style segmented controls, toggles, large tap targets.
 - **Tone:** calm, spacious, confident. No clutter, no debug vibes. Production-grade.
