@@ -26,10 +26,10 @@
   --text-mut: #9BA1AA;
 
   /* the material */
-  --glass:        linear-gradient(158deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, .035));
-  --glass-strong: linear-gradient(158deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .06));
-  --glass-stroke: rgba(255, 255, 255, .14);
-  --glass-sheen:  rgba(255, 255, 255, .26);   /* diagonal specular sweep */
+  --glass:        linear-gradient(158deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .05));
+  --glass-strong: linear-gradient(158deg, rgba(255, 255, 255, .20), rgba(255, 255, 255, .08));
+  --glass-stroke: rgba(255, 255, 255, .16);
+  --glass-sheen:  rgba(255, 255, 255, .32);   /* diagonal specular sweep */
   --glass-blur:   22px;
   --glass-sat:    180%;
 
@@ -51,8 +51,10 @@
   --aurora-2: #1E6BFF;
   --aurora-3: #12E1A8;
   --aurora-4: #7A5CFF;
-  --aurora-opacity: .5;
-  --vignette: rgba(3, 5, 8, .82);
+  --aurora-opacity: .62;
+  /* Soft and late. A heavy vignette starved the centre column of colour, so the glass
+     blurred near-black and every card came out a flat grey box. */
+  --vignette: rgba(3, 5, 8, .45);
 
   /* radii — capsules and generous corners, iOS 26 style */
   --r-sm:   14px;
@@ -107,8 +109,8 @@
     --drop-1: 0 8px 24px rgba(16, 24, 40, .09);
     --drop-2: 0 20px 52px rgba(16, 24, 40, .14);
 
-    --aurora-opacity: .34;
-    --vignette: rgba(236, 239, 244, .75);
+    --aurora-opacity: .42;
+    --vignette: rgba(236, 239, 244, .45);
   }
 }
 

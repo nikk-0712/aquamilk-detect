@@ -34,6 +34,10 @@ if (!supported()) {
     : "<b>This browser cannot talk to the device.</b> Web Serial and browser flashing exist only in desktop Chrome and Edge. Everything else on this site still works.";
 }
 
+// ponytail: no JS for scroll reveal. It is CSS `animation-timeline: view()` in app.css —
+// no observer to construct, no class bookkeeping, and nothing can leave content hidden if
+// the script fails, which an opacity:0-until-JS approach can.
+
 // ------------------------------------------------------------ glass highlight
 // Liquid Glass reacts to the pointer. CSS cannot read cursor position, so feed it in:
 // each glass surface gets --mx/--my and its ::after paints a soft specular bloom there.
