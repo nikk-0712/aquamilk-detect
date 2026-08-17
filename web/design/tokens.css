@@ -25,7 +25,7 @@
   --adulter:   #FF3B30;
   --uncertain: #FFB340;
 
-  --bg:       #05070A;
+  --bg:       #030406;
   --text:     #F7F8FA;
   --text-mut: #A8AFB8;
 
@@ -45,7 +45,7 @@
   --glass-stroke: rgba(255, 255, 255, .14);
   --glass-sheen:  rgba(255, 255, 255, .22);
 
-  --ribbon:     rgba(255, 255, 255, .10);
+  --ribbon:     rgba(255, 255, 255, .085);
   --trough:     rgba(255, 255, 255, .055);
   --hover-wash: rgba(255, 255, 255, .09);
   --line:       rgba(255, 255, 255, .09);
@@ -62,8 +62,8 @@
   --aurora-2: #143A7A;
   --aurora-3: #8FE9F5;
   --aurora-4: #C2643C;
-  --aurora-opacity: .45;
-  --vignette: rgba(3, 5, 8, .45);
+  --aurora-opacity: .26;
+  --vignette: rgba(1, 2, 3, .66);
 
   --scrollbar:       rgba(255, 255, 255, .18);
   --scrollbar-hover: rgba(255, 255, 255, .32);
