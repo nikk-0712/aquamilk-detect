@@ -1,18 +1,18 @@
 /* tokens.css — the shared design system (PROJECT_CONTEXT.md §9).
-   The GitHub-hosted app links this file; the device dashboard inlines the same values
+   index.html links this file directly; the device dashboard inlines the same values
    (03_deployment/dashboard.html) because it has to be one self-contained gzipped page.
    Change a value here, mirror it there.
 
-   Two palettes in one: our brand accent + result semantics, and the glass material.
-   Dark is the primary appearance — glass needs a dark, colourful backdrop to read as
-   glass at all. Light mode gets a lighter glass so the same components still work. */
+   Three groups: brand accent, result semantics, and the glass material. Dark is the
+   primary appearance — glass needs a dark, colourful backdrop to read as glass at all.
+   Light mode swaps the material for a white-tinted one so the same components work. */
 
 :root {
   /* brand */
   --accent:        #0FB5C9;
   --accent-strong: #0A8FA3;
-  --accent-soft:   rgba(15, 181, 201, .14);
-  --accent-glow:   rgba(15, 181, 201, .38);
+  --accent-soft:   rgba(15, 181, 201, .15);
+  --accent-glow:   rgba(15, 181, 201, .34);
 
   /* result semantics — Apple system colours */
   --pure:      #34C759;
@@ -20,40 +20,45 @@
   --uncertain: #FF9F0A;
 
   /* ---------------- dark: the primary appearance ---------------- */
-  /* Base is near-black, not pure black: the aurora needs somewhere to sit. */
-  --bg:        #07090C;
-  --bg-elev:   rgba(255, 255, 255, .06);
-  --text:      #F5F5F7;
-  --text-mut:  #A1A1A6;
+  /* Not pure black: the aurora needs somewhere to sit, and #000 crushes the glass. */
+  --bg:       #07090C;
+  --text:     #F7F8FA;
+  --text-mut: #9BA1AA;
 
-  /* the glass material */
-  --glass:        linear-gradient(158deg, rgba(255, 255, 255, .11), rgba(255, 255, 255, .04));
-  --glass-strong: linear-gradient(158deg, rgba(255, 255, 255, .17), rgba(255, 255, 255, .07));
-  --glass-stroke: rgba(255, 255, 255, .16);
-  --glass-hi:     rgba(255, 255, 255, .55);   /* specular top edge */
-  --glass-sheen:  rgba(255, 255, 255, .30);   /* diagonal sweep */
+  /* the material */
+  --glass:        linear-gradient(158deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, .035));
+  --glass-strong: linear-gradient(158deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .06));
+  --glass-stroke: rgba(255, 255, 255, .14);
+  --glass-sheen:  rgba(255, 255, 255, .26);   /* diagonal specular sweep */
   --glass-blur:   22px;
   --glass-sat:    180%;
-  --line:         rgba(255, 255, 255, .10);
 
-  /* depth: glass casts a soft, wide shadow and holds an inner rim light */
-  --lift-1: 0 1px 0 var(--glass-hi) inset, 0 0 0 1px rgba(255, 255, 255, .04) inset,
-            0 10px 30px rgba(0, 0, 0, .45);
-  --lift-2: 0 1px 0 var(--glass-hi) inset, 0 0 0 1px rgba(255, 255, 255, .06) inset,
-            0 24px 60px rgba(0, 0, 0, .55);
+  /* glass thickness: lit top edge, shaded bottom edge */
+  --edge-top:    rgba(255, 255, 255, .45);
+  --edge-bottom: rgba(0, 0, 0, .35);
 
-  /* aurora blobs */
+  /* recessed surfaces: troughs, inputs, tiles */
+  --trough:     rgba(255, 255, 255, .055);
+  --hover-wash: rgba(255, 255, 255, .09);
+  --line:       rgba(255, 255, 255, .09);
+
+  /* drop shadows — wide and soft, never a hard offset */
+  --drop-1: 0 8px 24px rgba(0, 0, 0, .42);
+  --drop-2: 0 20px 52px rgba(0, 0, 0, .52);
+
+  /* backdrop */
   --aurora-1: #0FB5C9;
   --aurora-2: #1E6BFF;
   --aurora-3: #12E1A8;
   --aurora-4: #7A5CFF;
-  --aurora-opacity: .55;
+  --aurora-opacity: .5;
+  --vignette: rgba(3, 5, 8, .82);
 
   /* radii — capsules and generous corners, iOS 26 style */
   --r-sm:   14px;
   --r-md:   18px;
   --r-lg:   24px;
-  --r-2xl:  30px;
+  --r-2xl:  28px;
   --r-full: 980px;
 
   /* 8-pt spacing scale */
@@ -70,37 +75,40 @@
   /* motion */
   --dur-fast: 150ms;
   --dur:      300ms;
-  --dur-slow: 550ms;
+  --dur-slow: 560ms;
   --ease:     cubic-bezier(.4, 0, .2, 1);
   --ease-out: cubic-bezier(0, 0, .2, 1);
-  --spring:   cubic-bezier(.2, 1.25, .35, 1);
+  --spring:   cubic-bezier(.2, 1.2, .32, 1);
 
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
           system-ui, "Segoe UI", sans-serif;
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 }
 
-/* ---------------- light: same components, lighter glass ---------------- */
+/* ---------------- light: same components, white-tinted glass ---------------- */
 @media (prefers-color-scheme: light) {
   :root {
-    --bg:       #EEF1F5;
-    --bg-elev:  rgba(255, 255, 255, .72);
-    --text:     #1D1D1F;
-    --text-mut: #6E6E73;
+    --bg:       #ECEFF4;
+    --text:     #17181B;
+    --text-mut: #6B7078;
 
-    --glass:        linear-gradient(158deg, rgba(255, 255, 255, .78), rgba(255, 255, 255, .55));
-    --glass-strong: linear-gradient(158deg, rgba(255, 255, 255, .92), rgba(255, 255, 255, .70));
-    --glass-stroke: rgba(0, 0, 0, .10);
-    --glass-hi:     rgba(255, 255, 255, .95);
-    --glass-sheen:  rgba(255, 255, 255, .65);
-    --line:         rgba(0, 0, 0, .10);
+    --glass:        linear-gradient(158deg, rgba(255, 255, 255, .80), rgba(255, 255, 255, .58));
+    --glass-strong: linear-gradient(158deg, rgba(255, 255, 255, .94), rgba(255, 255, 255, .74));
+    --glass-stroke: rgba(16, 20, 28, .09);
+    --glass-sheen:  rgba(255, 255, 255, .75);
 
-    --lift-1: 0 1px 0 var(--glass-hi) inset, 0 0 0 1px rgba(255, 255, 255, .5) inset,
-              0 10px 30px rgba(16, 24, 40, .10);
-    --lift-2: 0 1px 0 var(--glass-hi) inset, 0 0 0 1px rgba(255, 255, 255, .6) inset,
-              0 24px 60px rgba(16, 24, 40, .14);
+    --edge-top:    rgba(255, 255, 255, .95);
+    --edge-bottom: rgba(16, 20, 28, .07);
 
-    --aurora-opacity: .38;
+    --trough:     rgba(255, 255, 255, .55);
+    --hover-wash: rgba(16, 20, 28, .05);
+    --line:       rgba(16, 20, 28, .09);
+
+    --drop-1: 0 8px 24px rgba(16, 24, 40, .09);
+    --drop-2: 0 20px 52px rgba(16, 24, 40, .14);
+
+    --aurora-opacity: .34;
+    --vignette: rgba(236, 239, 244, .75);
   }
 }
 
