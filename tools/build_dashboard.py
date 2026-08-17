@@ -22,9 +22,11 @@ def main() -> int:
         print(f"error: {SRC} not found", file=sys.stderr)
         return 1
 
-    raw = SRC.read_bytes()
-    # mtime=0 keeps the output byte-identical for identical input, so rebuilds do not
-    # show up as spurious diffs.
+    # Normalise line endings before compressing. git hands a Windows checkout CRLF and a
+    # Linux runner LF, so gzipping the bytes as-found produces a different header on each
+    # platform and the staleness check in CI can never pass. mtime=0 likewise keeps the
+    # output byte-identical for identical input, so rebuilds are not spurious diffs.
+    raw = SRC.read_bytes().replace(b"\r\n", b"\n")
     packed = gzip.compress(raw, compresslevel=9, mtime=0)
 
     lines = [
@@ -40,7 +42,8 @@ def main() -> int:
         chunk = packed[i : i + 16]
         lines.append("  " + "".join(f"0x{b:02x}, " for b in chunk).rstrip())
     lines.append("};")
-    DST.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    # newline="\n" so the header itself is identical on Windows and Linux too
+    DST.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
     ratio = 100 * len(packed) / len(raw) if raw else 0
     print(f"{SRC.name}: {len(raw)} B -> {len(packed)} B gzipped ({ratio:.0f}%) -> {DST.name}")
