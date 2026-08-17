@@ -7,8 +7,9 @@
    glass needs a dark, coloured backdrop to read as glass. */
 :root{--accent:#0FB5C9;--accent-d:#0A8FA3;--green:#34C759;--red:#FF3B30;--amber:#FF9F0A;
 --bg:#07090C;--text:#F5F5F7;--muted:#A1A1A6;--line:rgba(255,255,255,.1);--r:26px;
---glass:linear-gradient(158deg,rgba(255,255,255,.11),rgba(255,255,255,.04));
---glass-s:linear-gradient(158deg,rgba(255,255,255,.17),rgba(255,255,255,.07));
+--glass:linear-gradient(158deg,rgba(255,255,255,.085),rgba(255,255,255,.025));
+--glass-s:linear-gradient(158deg,rgba(255,255,255,.14),rgba(255,255,255,.05));
+--mesh-line:rgba(255,255,255,.045);--mote:rgba(190,245,255,.5);
 --stroke:rgba(255,255,255,.14);--hi:rgba(255,255,255,.55);--sheen:rgba(255,255,255,.26);
 --edge-t:rgba(255,255,255,.45);--edge-b:rgba(0,0,0,.35);--trough:rgba(255,255,255,.055);
 --aop:.5;--ease:cubic-bezier(.4,0,.2,1)}
@@ -33,6 +34,22 @@ animation:drift 44s var(--ease) infinite alternate}
 @keyframes drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(5%,-4%,0) scale(1.14)}}
 @media(prefers-color-scheme:light){.aurora i{mix-blend-mode:normal}}
 @media(prefers-reduced-motion:reduce){.aurora i{animation:none}}
+/* Structure for the glass to refract: blurring a smooth gradient returns the same
+   gradient, so a ruled grid and a few hard-edged motes give the blur something to smear.
+   Crisp outside the panels, soft bands beneath them. */
+.mesh{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:clip;
+background-image:repeating-linear-gradient(90deg,var(--mesh-line) 0 1px,transparent 1px 64px),
+repeating-linear-gradient(0deg,var(--mesh-line) 0 1px,transparent 1px 64px);
+-webkit-mask-image:radial-gradient(120% 100% at 50% 0%,#000 30%,transparent 78%);
+mask-image:radial-gradient(120% 100% at 50% 0%,#000 30%,transparent 78%)}
+.mesh b{position:absolute;display:block;border-radius:50%;background:var(--mote);
+box-shadow:0 0 20px 6px var(--mote);animation:rise 28s linear infinite}
+.mesh b:nth-child(1){width:9px;height:9px;left:14%;top:82%}
+.mesh b:nth-child(2){width:6px;height:6px;left:44%;top:90%;animation-duration:23s;animation-delay:-8s}
+.mesh b:nth-child(3){width:12px;height:12px;left:72%;top:86%;animation-duration:35s;animation-delay:-17s}
+@keyframes rise{from{transform:translateY(0);opacity:0}12%{opacity:1}88%{opacity:1}
+to{transform:translateY(-88vh) scale(1.2);opacity:0}}
+@media(prefers-reduced-motion:reduce){.mesh b{animation:none;opacity:.7}}
 /* slim translucent scrollbar rather than the default slab */
 html{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;overflow-x:clip}
 @media(prefers-color-scheme:light){html{scrollbar-color:rgba(16,20,28,.22) transparent}}
@@ -45,9 +62,11 @@ header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
    crisp on a phone's 3x display instead of looking like a plastic 1px border. */
 .card{position:relative;isolation:isolate;background:var(--glass);border:0;
 border-radius:var(--r);padding:20px;margin-bottom:14px;
-backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);
+backdrop-filter:blur(30px) saturate(150%);-webkit-backdrop-filter:blur(30px) saturate(150%);
 box-shadow:0 .5px 0 0 var(--edge-t) inset,0 -.5px 0 0 var(--edge-b) inset,
-0 0 0 .5px var(--stroke) inset,0 8px 24px rgba(0,0,0,.42)}
+0 0 0 .5px var(--stroke) inset,
+0 -18px 30px -22px rgba(0,0,0,.8) inset,0 22px 34px -26px rgba(255,255,255,.18) inset,
+0 8px 24px rgba(0,0,0,.42)}
 /* specular sweep — the lit edge that separates glass from a tinted box */
 .card::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none;
 background:linear-gradient(118deg,var(--sheen) 0%,transparent 24%,transparent 76%,rgba(255,255,255,.08) 100%);
@@ -114,6 +133,7 @@ box-shadow:0 1px 0 var(--hi) inset,0 4px 14px rgba(0,0,0,.32)}
 </style></head><body>
 
 <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="mesh" aria-hidden="true"><b></b><b></b><b></b></div>
 
 <header>
 <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c3.6 4.2 6.2 7.6 6.2 11a6.2 6.2 0 1 1-12.4 0c0-3.4 2.6-6.8 6.2-11z" fill="none" stroke="#0FB5C9" stroke-width="1.7"/><path d="M8.6 14.4c1.4.9 2.6-.9 4-.1s2.3.7 3 .1" fill="none" stroke="#0FB5C9" stroke-width="1.5" stroke-linecap="round"/></svg>

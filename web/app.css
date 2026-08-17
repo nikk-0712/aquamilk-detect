@@ -84,6 +84,37 @@ body {
   background: radial-gradient(135% 110% at 50% 32%, transparent 70%, var(--vignette) 100%);
 }
 
+/* ------------------------------------------------------ structure to refract */
+/* A blur of a smooth gradient IS that gradient — which is why glass over a plain
+   aurora looked like a flat tinted box. This layer adds high-frequency detail: a fine
+   ruled grid, and hard-edged motes drifting through it. Crisp outside the glass,
+   smeared into soft bands beneath it — that contrast is the whole effect. */
+.mesh {
+  position: fixed; inset: 0; z-index: -2; pointer-events: none; overflow: clip;
+  background-image:
+    repeating-linear-gradient(90deg, var(--mesh-line) 0 1px, transparent 1px 68px),
+    repeating-linear-gradient(0deg,  var(--mesh-line) 0 1px, transparent 1px 68px);
+  mask-image: radial-gradient(120% 100% at 50% 0%, #000 30%, transparent 78%);
+}
+.mesh b {
+  position: absolute; display: block; border-radius: 50%;
+  background: var(--mote); box-shadow: 0 0 22px 6px var(--mote);
+  animation: rise 26s linear infinite;
+}
+.mesh b:nth-child(1) { width: 10px; height: 10px; left: 12%; top: 78%; animation-duration: 31s; }
+.mesh b:nth-child(2) { width: 6px;  height: 6px;  left: 28%; top: 88%; animation-duration: 24s; animation-delay: -7s; }
+.mesh b:nth-child(3) { width: 14px; height: 14px; left: 47%; top: 92%; animation-duration: 38s; animation-delay: -15s; }
+.mesh b:nth-child(4) { width: 8px;  height: 8px;  left: 66%; top: 84%; animation-duration: 28s; animation-delay: -21s; }
+.mesh b:nth-child(5) { width: 5px;  height: 5px;  left: 79%; top: 95%; animation-duration: 22s; animation-delay: -4s; }
+.mesh b:nth-child(6) { width: 11px; height: 11px; left: 90%; top: 80%; animation-duration: 34s; animation-delay: -12s; }
+@keyframes rise {
+  from { transform: translateY(0) scale(1); opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  to   { transform: translateY(-92vh) scale(1.25); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .mesh b { animation: none; opacity: .7; } }
+
 /* Fine grain over everything. Large blurs band visibly without it, and banding is the
    single most "cheap gradient" tell. */
 .grain { position: fixed; inset: 0; z-index: -2; pointer-events: none; opacity: .04;
@@ -107,6 +138,8 @@ body {
     0 .5px 0 0 var(--edge-top) inset,        /* lit top edge */
     0 -.5px 0 0 var(--edge-bottom) inset,    /* shaded bottom edge */
     0 0 0 .5px var(--glass-stroke) inset,    /* hairline all round */
+    0 -18px 30px -22px rgba(0, 0, 0, .8) inset,  /* light pools away from the base */
+    0 22px 34px -26px rgba(255, 255, 255, .18) inset, /* and gathers under the top */
     var(--drop-1);
 }
 .glass::before, .card::before,
