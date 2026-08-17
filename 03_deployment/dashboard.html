@@ -134,6 +134,39 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 -webkit-appearance:none;margin:0}
 select{padding-right:40px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%23A1A1A6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 5l4 4 4-4'/%3E%3C/svg%3E");
 background-repeat:no-repeat;background-position:right 15px center}
+
+/* Custom listbox. A native select's option popup is OS chrome — it cannot be blurred,
+   rounded or tinted, which is why it kept appearing as a white slab in the middle of
+   the glass. This is the same control rebuilt from elements we own. */
+.sel{position:relative}
+.selbtn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+padding:13px 15px;min-height:46px;min-width:0;border:0;border-radius:14px;
+font:15px -apple-system,BlinkMacSystemFont,system-ui;color:var(--text);text-align:left;
+background:var(--trough);
+backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);
+box-shadow:0 0 0 .5px var(--stroke) inset,0 .5px 0 0 var(--edge-t) inset;
+transition:box-shadow .3s var(--ease),background .3s var(--ease)}
+.selbtn:hover{background:var(--hover);transform:none;filter:none;
+box-shadow:0 0 0 .5px var(--stroke) inset,0 .5px 0 0 var(--edge-t) inset}
+.selbtn[aria-expanded=true]{background:var(--hover);
+box-shadow:0 0 0 1px var(--accent) inset,0 0 0 4px var(--accent-soft)}
+.selbtn svg{width:13px;height:13px;color:var(--muted);flex:none;transition:transform .25s var(--ease)}
+.selbtn[aria-expanded=true] svg{transform:rotate(180deg)}
+.sellist{position:absolute;z-index:30;top:calc(100% + 8px);left:0;right:0;margin:0;padding:6px;
+list-style:none;border-radius:18px;
+background:var(--glass-s);
+backdrop-filter:blur(26px) saturate(160%) brightness(1.06);
+-webkit-backdrop-filter:blur(26px) saturate(160%) brightness(1.06);
+box-shadow:0 0 0 .5px var(--stroke) inset,0 .5px 0 0 var(--edge-t) inset,0 18px 40px rgba(0,0,0,.5);
+animation:selin .18s var(--ease) both;transform-origin:top center}
+@keyframes selin{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}
+.sellist li{padding:11px 13px;border-radius:12px;font-size:15px;cursor:pointer;
+display:flex;align-items:center;justify-content:space-between;gap:8px;
+transition:background .18s var(--ease)}
+.sellist li:hover,.sellist li.on{background:var(--hover)}
+.sellist li[aria-selected=true]::after{content:"";width:7px;height:7px;border-radius:50%;
+background:var(--accent-ink);box-shadow:0 0 8px var(--accent-ink)}
+@media(prefers-reduced-motion:reduce){.sellist{animation:none}.selbtn svg{transition:none}}
 /* Range: a glass trough with a lit thumb, instead of the browser's slab. */
 input[type=range]{width:100%;height:32px;background:none;-webkit-appearance:none;appearance:none;
 padding:0;box-shadow:none;min-height:0}
@@ -213,7 +246,7 @@ box-shadow:0 1px 0 var(--hi) inset,0 4px 14px rgba(0,0,0,.32)}
 <div class="row" style="margin-top:14px"><button id="save">Save</button></div></div>
 
 <div class="card"><h2>Wi-Fi</h2><div class="vsub" id="wifi"></div>
-<label>Mode</label><select id="wmode"><option value="ap">SoftAP (own network)</option><option value="sta">Join a network</option></select>
+<label id="wmodeLbl">Mode</label><div class="sel" id="wsel"><button type="button" class="selbtn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="wmodeLbl"><span>SoftAP (own network)</span><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5l4 4 4-4"/></svg></button><ul class="sellist" role="listbox" hidden><li role="option" data-v="ap" aria-selected="true">SoftAP (own network)</li><li role="option" data-v="sta" aria-selected="false">Join a network</li></ul><input type="hidden" id="wmode" value="ap"></div>
 <label>SSID</label><input type="text" id="wssid" autocomplete="off">
 <label>Password</label><input type="password" id="wpass" autocomplete="off">
 <div class="row" style="margin-top:14px"><button id="wsave">Save &amp; reboot</button></div></div>
@@ -281,6 +314,31 @@ function connect(){ws=new WebSocket(`ws://${location.host}/ws`);
     if(m.t==="reading")renderSens(m);else if(m.t==="result")showVerdict(m);
     else if(m.t==="status")status(m.state);};}
 
+
+// Custom listbox: keeps #wmode (a hidden input) as the single source of truth, so the
+// Wi-Fi POST below is unchanged.
+(()=>{const sel=$("wsel"),btn=sel.querySelector(".selbtn"),list=sel.querySelector(".sellist"),
+lab=btn.querySelector("span"),items=[...list.querySelectorAll("li")];
+const open=o=>{list.hidden=!o;btn.setAttribute("aria-expanded",o);
+ if(o){const i=items.findIndex(x=>x.getAttribute("aria-selected")==="true");items.forEach(x=>x.classList.remove("on"));
+ (items[i]||items[0]).classList.add("on")}};
+const pick=li=>{items.forEach(x=>x.setAttribute("aria-selected",String(x===li)));
+ lab.textContent=li.textContent;$("wmode").value=li.dataset.v;open(false);btn.focus()};
+btn.onclick=()=>open(list.hidden);
+items.forEach(li=>li.onclick=()=>pick(li));
+document.addEventListener("click",e=>{if(!sel.contains(e.target))open(false)});
+sel.addEventListener("keydown",e=>{
+ if(e.key==="Escape"){open(false);btn.focus();return}
+ if(list.hidden&&(e.key==="ArrowDown"||e.key==="Enter"||e.key===" ")){e.preventDefault();open(true);return}
+ if(list.hidden)return;
+ const cur=items.findIndex(x=>x.classList.contains("on"));
+ if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();
+  const n=(cur+(e.key==="ArrowDown"?1:items.length-1))%items.length;
+  items.forEach(x=>x.classList.remove("on"));items[n].classList.add("on")}
+ else if(e.key==="Enter"||e.key===" "){e.preventDefault();pick(items[cur<0?0:cur])}});
+// reflect whatever the device reports
+window.setWifiMode=v=>{const li=items.find(x=>x.dataset.v===v)||items[0];pick(li);open(false)};
+})();
 const post=(p,q="")=>fetch(p+(q?"?"+q:""),{method:"POST"});
 $("run").onclick=()=>post("/api/test");
 $("flush").onclick=()=>post("/api/flush");
@@ -316,7 +374,7 @@ fetch("/api/state").then(r=>r.json()).then(s=>{
   $("stub").hidden=!s.placeholder;
   $("thr").value=s.thr;thrFill();
   $("fms").value=s.flush_ms;$("ams").value=s.avg_ms;
-  $("wmode").value=s.wifi.mode;$("wssid").value=s.wifi.mode==="sta"?s.wifi.ssid:"";
+  setWifiMode(s.wifi.mode);$("wssid").value=s.wifi.mode==="sta"?s.wifi.ssid:"";
   $("wifi").textContent=s.wifi.mode==="ap"?`SoftAP ${s.wifi.ssid} · ${s.wifi.ip}`
     :`Joined ${s.wifi.ssid} · ${s.wifi.ip} · aquamilk.local`;
   if(s.last)showVerdict(s.last);else renderZ(new Array(9).fill(0));
