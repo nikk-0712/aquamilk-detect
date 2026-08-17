@@ -32,18 +32,26 @@
   --scrollbar:       rgba(255, 255, 255, .18);
   --scrollbar-hover: rgba(255, 255, 255, .32);
 
-  /* The material. Fill stays low — the panel should be mostly *what is behind it*,
-     blurred. A heavy fill is what turned these into flat tinted boxes. */
-  --glass:        linear-gradient(158deg, rgba(255, 255, 255, .085), rgba(255, 255, 255, .025));
-  --glass-strong: linear-gradient(158deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .05));
-  --glass-stroke: rgba(255, 255, 255, .18);
-  --glass-sheen:  rgba(255, 255, 255, .40);   /* diagonal specular sweep */
-  --glass-blur:   30px;
-  --glass-sat:    150%;
+  /* The material. Real liquid glass is defined by its RIM and its blur, not by a white
+     fill — in any Apple example the panel is essentially transparent with a bright,
+     varying edge. Anything above ~5% fill reads as tinted plastic. */
+  --glass:        rgba(255, 255, 255, .045);
+  --glass-strong: rgba(255, 255, 255, .085);
+  --glass-blur:   26px;
+  --glass-sat:    140%;
+  --glass-bright: 1.08;          /* glass transmits slightly more light than it blocks */
 
-  /* structure behind the glass, so the blur has something to smear */
-  --mesh-line: rgba(255, 255, 255, .045);
-  --mote:      rgba(190, 245, 255, .5);
+  /* The rim, brightest where the light strikes and fading away from it. This gradient
+     is the single most important part of the material. */
+  --rim-hot:  rgba(255, 255, 255, .92);
+  --rim-warm: rgba(255, 255, 255, .34);
+  --rim-cool: rgba(255, 255, 255, .10);
+  --rim-dim:  rgba(255, 255, 255, .28);
+  --glass-stroke: rgba(255, 255, 255, .14);
+  --glass-sheen:  rgba(255, 255, 255, .22);
+
+  /* light ribbons behind the glass — detail for the blur to smear */
+  --ribbon: rgba(255, 255, 255, .10);
 
   /* glass thickness: lit top edge, shaded bottom edge */
   --edge-top:    rgba(255, 255, 255, .45);
@@ -108,12 +116,16 @@
     --text:     #17181B;
     --text-mut: #6B7078;
 
-    --glass:        linear-gradient(158deg, rgba(255, 255, 255, .58), rgba(255, 255, 255, .38));
-    --glass-strong: linear-gradient(158deg, rgba(255, 255, 255, .78), rgba(255, 255, 255, .56));
-    --glass-stroke: rgba(16, 20, 28, .10);
-    --glass-sheen:  rgba(255, 255, 255, .85);
-    --mesh-line: rgba(16, 20, 28, .05);
-    --mote:      rgba(60, 170, 210, .35);
+    --glass:        rgba(255, 255, 255, .42);
+    --glass-strong: rgba(255, 255, 255, .62);
+    --glass-bright: 1.04;
+    --rim-hot:  rgba(255, 255, 255, .98);
+    --rim-warm: rgba(255, 255, 255, .55);
+    --rim-cool: rgba(16, 20, 28, .06);
+    --rim-dim:  rgba(16, 20, 28, .10);
+    --glass-stroke: rgba(16, 20, 28, .08);
+    --glass-sheen:  rgba(255, 255, 255, .6);
+    --ribbon: rgba(16, 20, 28, .05);
 
     --edge-top:    rgba(255, 255, 255, .95);
     --edge-bottom: rgba(16, 20, 28, .07);

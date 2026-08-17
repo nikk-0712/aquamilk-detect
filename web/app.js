@@ -56,6 +56,10 @@ if (MOTION_OK) {
       card.style.setProperty("--my", `${py * 100}%`);
       card.style.setProperty("--ry", `${(px - .5) * 4}deg`);   // 2 degrees max
       card.style.setProperty("--rx", `${(.5 - py) * 4}deg`);
+      // Rotate the rim gradient so its hot spot faces the cursor: the light source
+      // moves, the way it does on a real pane tilted under a lamp.
+      const deg = (Math.atan2(py - .5, px - .5) * 180) / Math.PI + 270;
+      card.style.setProperty("--rim-angle", `${deg}deg`);
     }
     // buttons drift a few pixels toward the cursor
     const btn = e.target.closest?.("button, .btn");
@@ -70,7 +74,7 @@ if (MOTION_OK) {
   addEventListener("pointerout", e => {
     const el = e.target.closest?.(".card, .glass, button, .btn");
     if (!el || el.contains(e.relatedTarget)) return;
-    for (const p of ["--rx", "--ry", "--bx", "--by"]) el.style.removeProperty(p);
+    for (const p of ["--rx", "--ry", "--bx", "--by", "--rim-angle"]) el.style.removeProperty(p);
   }, { passive: true });
 }
 

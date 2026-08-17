@@ -85,35 +85,31 @@ body {
 }
 
 /* ------------------------------------------------------ structure to refract */
-/* A blur of a smooth gradient IS that gradient — which is why glass over a plain
-   aurora looked like a flat tinted box. This layer adds high-frequency detail: a fine
-   ruled grid, and hard-edged motes drifting through it. Crisp outside the glass,
-   smeared into soft bands beneath it — that contrast is the whole effect. */
-.mesh {
-  position: fixed; inset: 0; z-index: -2; pointer-events: none; overflow: clip;
-  background-image:
-    repeating-linear-gradient(90deg, var(--mesh-line) 0 1px, transparent 1px 68px),
-    repeating-linear-gradient(0deg,  var(--mesh-line) 0 1px, transparent 1px 68px);
-  mask-image: radial-gradient(120% 100% at 50% 0%, #000 30%, transparent 78%);
+/* Light ribbons: long, soft, curved bands sweeping across the dark ground, the way a
+   sheet of glass catches a studio light. This is the detail the blur needs — a smooth
+   colour field blurs to itself and produces no glass cue at all. */
+.ribbons { position: fixed; inset: -10%; z-index: -2; pointer-events: none; overflow: clip;
+  filter: blur(14px); }
+.ribbons b {
+  position: absolute; display: block;
+  left: -30%; width: 160%; height: 34vmax;
+  border-radius: 50%;
+  background: linear-gradient(97deg, transparent 8%, var(--ribbon) 38%,
+                              rgba(255, 255, 255, .16) 50%, var(--ribbon) 62%, transparent 92%);
+  animation: swim 46s var(--ease) infinite alternate;
 }
-.mesh b {
-  position: absolute; display: block; border-radius: 50%;
-  background: var(--mote); box-shadow: 0 0 22px 6px var(--mote);
-  animation: rise 26s linear infinite;
+.ribbons b:nth-child(1) { top: -6%; }
+.ribbons b:nth-child(2) { top: 16%; opacity: .8; animation-duration: 58s; animation-delay: -12s; }
+.ribbons b:nth-child(3) { top: 40%; opacity: .65; animation-duration: 67s; animation-delay: -26s; }
+.ribbons b:nth-child(4) { top: 63%; opacity: .75; animation-duration: 52s; animation-delay: -34s; }
+.ribbons b:nth-child(5) { top: 84%; opacity: .6;  animation-duration: 61s; animation-delay: -8s; }
+@keyframes swim {
+  from { transform: translate3d(-6%, 0, 0) rotate(-12deg) scaleY(1); }
+  to   { transform: translate3d(6%, -4vh, 0) rotate(-7deg) scaleY(1.35); }
 }
-.mesh b:nth-child(1) { width: 10px; height: 10px; left: 12%; top: 78%; animation-duration: 31s; }
-.mesh b:nth-child(2) { width: 6px;  height: 6px;  left: 28%; top: 88%; animation-duration: 24s; animation-delay: -7s; }
-.mesh b:nth-child(3) { width: 14px; height: 14px; left: 47%; top: 92%; animation-duration: 38s; animation-delay: -15s; }
-.mesh b:nth-child(4) { width: 8px;  height: 8px;  left: 66%; top: 84%; animation-duration: 28s; animation-delay: -21s; }
-.mesh b:nth-child(5) { width: 5px;  height: 5px;  left: 79%; top: 95%; animation-duration: 22s; animation-delay: -4s; }
-.mesh b:nth-child(6) { width: 11px; height: 11px; left: 90%; top: 80%; animation-duration: 34s; animation-delay: -12s; }
-@keyframes rise {
-  from { transform: translateY(0) scale(1); opacity: 0; }
-  12%  { opacity: 1; }
-  88%  { opacity: 1; }
-  to   { transform: translateY(-92vh) scale(1.25); opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .ribbons b { animation: none; transform: rotate(-10deg); }
 }
-@media (prefers-reduced-motion: reduce) { .mesh b { animation: none; opacity: .7; } }
 
 /* Fine grain over everything. Large blurs band visibly without it, and banding is the
    single most "cheap gradient" tell. */
@@ -126,21 +122,18 @@ body {
 }
 
 /* ------------------------------------------------------------- the material */
-/* One recipe, shared by .glass and .card. */
+/* One recipe, shared by .glass and .card.
+   The body is almost entirely transparent — it is the blur and the rim that read as
+   glass. brightness() above 1 matters: glass transmits slightly more light than it
+   blocks, which is why a real pane looks lighter than its surroundings, not darker. */
 .glass, .card {
   position: relative;
   isolation: isolate;
   background: var(--glass);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(var(--glass-bright));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(var(--glass-bright));
   border: 0;
-  box-shadow:
-    0 .5px 0 0 var(--edge-top) inset,        /* lit top edge */
-    0 -.5px 0 0 var(--edge-bottom) inset,    /* shaded bottom edge */
-    0 0 0 .5px var(--glass-stroke) inset,    /* hairline all round */
-    0 -18px 30px -22px rgba(0, 0, 0, .8) inset,  /* light pools away from the base */
-    0 22px 34px -26px rgba(255, 255, 255, .18) inset, /* and gathers under the top */
-    var(--drop-1);
+  box-shadow: var(--drop-1);
 }
 .glass::before, .card::before,
 .glass::after,  .card::after {
@@ -161,20 +154,26 @@ body {
 }
 .glass:hover::before, .card:hover::before { opacity: .9; }
 
-/* The refracting rim. A lens bends light hardest at its edge, so the outer 14px gets its
-   OWN backdrop-filter — blurrier and brighter than the face — masked to a ring by
-   compositing a padding-box fill against a border-box fill. This is as close to real
-   refraction as the web allows: backdrop-filter: url(#svgDisplacement) is unsupported in
-   every shipping browser, so nobody's "liquid glass on web" actually distorts. */
+/* THE RIM. This is the whole illusion: a hairline that is almost white where the light
+   strikes the top-left, fades to nothing across the middle, and picks up a dimmer catch
+   on the opposite edge — exactly what an Apple glass control does. A uniform 1px border
+   cannot do this; it needs a gradient, masked to the border box. */
 .glass::after, .card::after {
-  z-index: -1;
-  backdrop-filter: blur(6px) brightness(1.22) saturate(1.35);
-  -webkit-backdrop-filter: blur(6px) brightness(1.22) saturate(1.35);
-  padding: 14px;
+  z-index: 1;                        /* above the fill, below the content */
+  padding: 1.2px;
+  background: linear-gradient(142deg,
+    var(--rim-hot) 0%, var(--rim-warm) 12%, var(--rim-cool) 34%,
+    var(--rim-cool) 62%, var(--rim-dim) 88%, var(--rim-hot) 100%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
+}
+/* the light source moves with the pointer, so the rim's hot spot shifts with it */
+.glass:hover::after, .card:hover::after {
+  background: linear-gradient(var(--rim-angle, 142deg),
+    var(--rim-hot) 0%, var(--rim-warm) 12%, var(--rim-cool) 34%,
+    var(--rim-cool) 62%, var(--rim-dim) 88%, var(--rim-hot) 100%);
 }
 
 /* ------------------------------------------------------------------ layout */
