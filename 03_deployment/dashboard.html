@@ -12,14 +12,14 @@
 --rim-cool:rgba(255,255,255,.10);--rim-dim:rgba(255,255,255,.28);
 --ribbon:rgba(255,255,255,.085);
 --stroke:rgba(255,255,255,.14);--hi:rgba(255,255,255,.55);--sheen:rgba(255,255,255,.26);
---edge-t:rgba(255,255,255,.45);--edge-b:rgba(0,0,0,.35);--trough:rgba(255,255,255,.055);
---aop:.28;--ease:cubic-bezier(.4,0,.2,1)}
+--edge-t:rgba(255,255,255,.45);--edge-b:rgba(0,0,0,.35);--trough:rgba(255,255,255,.055);--hover:rgba(255,255,255,.09);--accent-soft:rgba(127,243,255,.16);
+--aop:.28;--ease:cubic-bezier(.4,0,.2,1);color-scheme:dark}
 @media(prefers-color-scheme:light){:root{--bg:#EEF1F5;--text:#1D1D1F;--muted:#6E6E73;
 --accent-ink:#067A8B;--line:rgba(0,0,0,.1);--glass:rgba(255,255,255,.42);--glass-s:rgba(255,255,255,.62);
 --rim-hot:rgba(255,255,255,.98);--rim-warm:rgba(255,255,255,.55);
 --rim-cool:rgba(16,20,28,.06);--rim-dim:rgba(16,20,28,.10);--ribbon:rgba(16,20,28,.05);
 --stroke:rgba(16,20,28,.08);--hi:rgba(255,255,255,.95);--sheen:rgba(255,255,255,.6);
---edge-t:rgba(255,255,255,.95);--edge-b:rgba(16,20,28,.07);--trough:rgba(255,255,255,.55);--aop:.3}}
+--edge-t:rgba(255,255,255,.95);--edge-b:rgba(16,20,28,.07);--trough:rgba(255,255,255,.55);--hover:rgba(16,20,28,.05);--accent-soft:rgba(15,181,201,.14);--aop:.3;color-scheme:light}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0 auto;padding:16px;font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
 background:var(--bg);color:var(--text);max-width:640px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -113,10 +113,42 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 table{width:100%;border-collapse:collapse;font-size:14px}
 td,th{text-align:left;padding:7px 4px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
 th{color:var(--muted);font-weight:500;font-size:12px}
-label{display:block;font-size:14px;margin:14px 0 4px}
-input[type=range]{width:100%;accent-color:var(--accent)}
-input[type=text],input[type=password],input[type=number],select{width:100%;padding:11px;border-radius:12px;
-border:1px solid var(--line);background:var(--bg);color:var(--text);font:15px -apple-system,system-ui}
+/* Form controls in the same material as everything else: recessed glass troughs with
+   a hairline, an accent focus ring, and a drawn chevron on the select. Native controls
+   render as flat black boxes that belong to no design language at all. */
+label{display:block;font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+color:var(--muted);margin:16px 0 6px}
+input[type=text],input[type=password],input[type=number],select{
+width:100%;padding:13px 15px;min-height:46px;font:15px -apple-system,BlinkMacSystemFont,system-ui;
+color:var(--text);background:var(--trough);border:0;border-radius:14px;
+-webkit-appearance:none;appearance:none;
+backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);
+box-shadow:0 0 0 .5px var(--stroke) inset,0 .5px 0 0 var(--edge-t) inset;
+transition:box-shadow .3s var(--ease),background .3s var(--ease)}
+input:focus,select:focus{outline:none;background:var(--hover);
+box-shadow:0 0 0 1px var(--accent) inset,0 0 0 4px var(--accent-soft)}
+input::placeholder{color:var(--muted);opacity:.8}
+/* the stepper arrows are the one part of a number field that cannot be styled */
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{
+-webkit-appearance:none;margin:0}
+select{padding-right:40px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%23A1A1A6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 5l4 4 4-4'/%3E%3C/svg%3E");
+background-repeat:no-repeat;background-position:right 15px center}
+/* Range: a glass trough with a lit thumb, instead of the browser's slab. */
+input[type=range]{width:100%;height:32px;background:none;-webkit-appearance:none;appearance:none;
+padding:0;box-shadow:none;min-height:0}
+input[type=range]:focus{box-shadow:none;background:none}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:999px;
+background:linear-gradient(90deg,var(--accent) 0 var(--fill,50%),var(--trough) var(--fill,50%) 100%);
+box-shadow:0 0 0 .5px var(--stroke) inset}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-8px;
+border-radius:50%;background:linear-gradient(158deg,#fff,#d8ecf5);
+box-shadow:0 2px 10px rgba(0,0,0,.55),0 0 0 .5px rgba(0,0,0,.25);transition:transform .15s var(--ease)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.12)}
+input[type=range]::-moz-range-track{height:6px;border-radius:999px;background:var(--trough)}
+input[type=range]::-moz-range-progress{height:6px;border-radius:999px;background:var(--accent)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radius:50%;
+background:linear-gradient(158deg,#fff,#d8ecf5);box-shadow:0 2px 10px rgba(0,0,0,.55)}
 details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px;list-style:none}
 details summary::-webkit-details-marker{display:none}
 .warn{background:rgba(255,159,10,.14);border:1px solid var(--amber);
@@ -260,7 +292,8 @@ $("save").onclick=()=>post("/api/settings",`thr=${$("thr").value}&flush_ms=${$("
   .then(()=>alert("Saved"));
 $("wsave").onclick=()=>confirm("Save Wi-Fi and reboot the device?")&&
   post("/api/wifi",`mode=${$("wmode").value}&ssid=${encodeURIComponent($("wssid").value)}&pass=${encodeURIComponent($("wpass").value)}`);
-$("thr").oninput=()=>$("thrv").textContent=(+$("thr").value).toFixed(2);
+const thrFill=()=>{const t=$("thr"),p=(t.value-t.min)/(t.max-t.min)*100;t.style.setProperty("--fill",p+"%");$("thrv").textContent=(+t.value).toFixed(2)};
+$("thr").oninput=thrFill;
 $("reload").onclick=loadLog;
 $("csv").onclick=()=>{const rows=[["uptime_ms","verdict","confidence","ph_mv","tds_mv","turbidity_mv","sg","temp_c"]]
   .concat(logRows.map(r=>[r.ms,r.cls,r.conf,r.ph,r.tds,r.turb,r.sg,r.temp]));
@@ -281,7 +314,7 @@ function loadLog(){fetch("/api/log").then(r=>r.text()).then(t=>{
 // no placeholder banner, no tables — leaving a page that looks broken with no reason.
 fetch("/api/state").then(r=>r.json()).then(s=>{
   $("stub").hidden=!s.placeholder;
-  $("thr").value=s.thr;$("thrv").textContent=(+s.thr).toFixed(2);
+  $("thr").value=s.thr;thrFill();
   $("fms").value=s.flush_ms;$("ams").value=s.avg_ms;
   $("wmode").value=s.wifi.mode;$("wssid").value=s.wifi.mode==="sta"?s.wifi.ssid:"";
   $("wifi").textContent=s.wifi.mode==="ap"?`SoftAP ${s.wifi.ssid} · ${s.wifi.ip}`
