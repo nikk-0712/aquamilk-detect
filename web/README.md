@@ -38,13 +38,17 @@ failing silently when you click Connect.
 
 ## firmware/
 
-`*-manifest.json` are committed with `"version": "dev-placeholder"` and point at
-`calibration.bin`, `collection.bin`, `deployment.bin`. The
-[build-firmware workflow](../.github/workflows/build-firmware.yml) compiles all three
-sketches, copies the **merged** binaries here (merged = bootloader + partition table +
-app in one image, which is why the manifest offset is 0), stamps the real version, and
-commits them back. Until that workflow has run once, the Flash buttons have nothing to
-download.
+`*-manifest.json` point at `calibration.bin`, `collection.bin`, `deployment.bin`. The
+[build-and-deploy workflow](../.github/workflows/build-and-deploy.yml) compiles all three
+sketches, drops the **merged** binaries here (merged = bootloader + partition table + app
+in one image, which is why the manifest offset is 0), stamps the real version into the
+manifests, and ships the folder to Pages as an artifact.
+
+The `.bin` files are deliberately **not in git** — each is 4 MB of padded flash image, so
+committing them cost ~12 MB per CI run. That means a fresh clone has manifests pointing at
+binaries that only exist on the deployed site: serving `web/` locally will show the Flash
+buttons, but they cannot install until you either run the workflow or build locally and
+copy the merged `.bin`s in yourself.
 
 ## Notes on the code
 
@@ -55,8 +59,12 @@ download.
   so the Python trainer can read the file with no massaging.
 - **Two independent serial links**, one per page. Calibrate and Collect run different
   firmwares, so there is no case where both are connected to the same device at once.
-- **esp-web-tools is pinned** to an exact version from unpkg. See the comment in
-  `index.html` for why a Subresource Integrity hash is not usable on that module.
+- **esp-web-tools is vendored**, not loaded from a CDN: `web/vendor/esp-web-tools/`
+  holds v10.4.0's bundled `dist/web` (Apache-2.0, `LICENSE` included). It started as a
+  pinned unpkg URL, which broke the Flash page twice over — the pinned version did not
+  exist, and a CDN fetch is blockable by extensions. Nothing external is fetched now.
+  To update: `npm pack esp-web-tools@<version>`, then copy `dist/web/*.js` + `LICENSE`
+  into that folder.
 - **The Run page is a launcher, not a dashboard.** This site is HTTPS; the device serves
   plain HTTP on a private IP, and browsers block that mix. So the live dashboard lives on
   the device (`03_deployment/dashboard.html`) and shares this app's design tokens.

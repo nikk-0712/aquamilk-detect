@@ -23,6 +23,10 @@ training/report/*.txt
 training/data/*.csv
 !training/data/SYNTHETIC_sample.csv
 
+# Built firmware. CI stages these into the Pages artifact; a merged ESP32 image is
+# padded to the full 4 MB flash size, so committing three of them cost ~12 MB per run.
+web/firmware/*.bin
+
 # OS noise
 Thumbs.db
 .DS_Store

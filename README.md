@@ -8,8 +8,8 @@ says **Uncertain** — in a few seconds, using six sensors and an on-device SVM.
 its own chamber between tests, shows the verdict on a TFT, and serves its own Wi-Fi
 dashboard with no internet involved.
 
-[![build-firmware](https://github.com/nikk-0712/aquamilk-detect/actions/workflows/build-firmware.yml/badge.svg)](https://github.com/nikk-0712/aquamilk-detect/actions/workflows/build-firmware.yml)
-[![deploy-web](https://github.com/nikk-0712/aquamilk-detect/actions/workflows/deploy-web.yml/badge.svg)](https://github.com/nikk-0712/aquamilk-detect/actions/workflows/deploy-web.yml)
+[![build-and-deploy](https://github.com/nikk-0712/aquamilk-detect/actions/workflows/build-and-deploy.yml/badge.svg)](https://github.com/nikk-0712/aquamilk-detect/actions/workflows/build-and-deploy.yml)
+[![Pages](https://img.shields.io/badge/live-nikk--0712.github.io%2Faquamilk--detect-0FB5C9)](https://nikk-0712.github.io/aquamilk-detect/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0FB5C9.svg)](LICENSE)
 
 SDGs: 3 (Good Health), 9 (Industry & Innovation), 12 (Responsible Consumption).
@@ -221,16 +221,21 @@ aquamilk-detect/
 
 ## CI
 
-- **build-firmware** regenerates `03_deployment/dashboard.h` from `dashboard.html`,
-  compiles all three sketches with pinned versions, copies the merged `.bin`s and
-  ESP Web Tools manifests into `web/firmware/`, and commits them back. It fails loudly if
-  any sketch does not compile, and the job summary warns when the deployment build still
-  carries the placeholder model.
-- **deploy-web** publishes `web/` to Pages, chained after the firmware build so new
-  binaries go live immediately.
+One workflow, [`build-and-deploy.yml`](.github/workflows/build-and-deploy.yml): regenerate
+`03_deployment/dashboard.h` (failing if the committed copy was stale), compile all three
+sketches with pinned tool/core/library versions, stage the merged `.bin`s and ESP Web
+Tools manifests into `web/firmware/`, then publish `web/` to Pages. It fails loudly if any
+sketch does not compile, and the job summary warns when the deployment build still carries
+the placeholder model.
 
-First push: enable Pages (Settings → Pages → Source: GitHub Actions), then run
-**build-firmware** once so the Flash page has something to install.
+The binaries are **not committed** — they reach Pages as an artifact. arduino-cli pads a
+merged image to the full 4 MB flash size, so committing three of them added ~12 MB to git
+on every run; going via the artifact also means CI needs no write access to the repo and
+leaves no bot commits. The trade-off: a plain `git clone` gives you no prebuilt binaries,
+so build them yourself or grab them from the live site.
+
+Live at **https://nikk-0712.github.io/aquamilk-detect/**. Pages is set to Source:
+GitHub Actions.
 
 ## Honest limits
 

@@ -35,16 +35,17 @@ if (!supported()) {
 }
 
 // ------------------------------------------------------- flashing availability
-// esp-web-tools is an ES module from a CDN. If it cannot load — offline, blocked
-// domain, locked-down network — the install buttons stay hidden (app.css hides the
-// element until it upgrades) and the Flash page would just look empty. Say what
-// happened and give the command-line way out.
+// esp-web-tools is vendored (web/vendor/esp-web-tools) so there is no CDN to fail,
+// but the module can still be blocked by an extension or fail to parse in an older
+// browser. app.css hides the install buttons until the element upgrades, so without
+// this notice the Flash page would just look empty.
 setTimeout(() => {
   if (customElements.get("esp-web-install-button")) return;
   const n = $("#flashFallback");
   n.hidden = false;
-  n.innerHTML = "<b>The flashing tool did not load.</b> It is fetched from unpkg.com, so " +
-    "an offline or restricted network stops it. Flash from a clone instead:<br>" +
+  n.innerHTML = "<b>The flashing tool did not load.</b> A browser extension may be " +
+    "blocking scripts on this page, or this browser is too old for it. Try desktop " +
+    "Chrome or Edge with shields off — or flash from a clone:<br>" +
     '<code class="mono">arduino-cli upload -p YOUR_PORT ' +
     "--fqbn esp32:esp32:esp32:PartitionScheme=huge_app 01_calibration</code>";
 }, 5000);

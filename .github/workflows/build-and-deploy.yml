@@ -1,0 +1,189 @@
+name: build-and-deploy
+
+# One workflow: compile the three sketches, then publish web/ (with the freshly built
+# binaries in it) to GitHub Pages.
+#
+# The binaries are NOT committed back. arduino-cli's merged image is padded to the full
+# 4 MB flash size, so committing three of them added ~12 MB to git on every single run.
+# They travel to the Pages job as an artifact instead, which also means the workflow
+# needs no write access to the repository and leaves no bot commits in the history.
+#
+# Every tool, core and library version is pinned so a build today matches a build in six
+# months.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '01_calibration/**'
+      - '02_collection/**'
+      - '03_deployment/**'
+      - 'libs/**'
+      - 'web/**'
+      - 'tools/build_dashboard.py'
+      - '.github/workflows/build-and-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  ARDUINO_CLI_VERSION: 1.1.1
+  ESP32_CORE: 3.3.10
+  # No OTA on this device, so give the app the space and keep 1 MB for LittleFS.
+  FQBN: esp32:esp32:esp32:PartitionScheme=huge_app
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Regenerate the device dashboard header
+        # Before compiling, so a stale committed dashboard.h can never ship.
+        run: python tools/build_dashboard.py
+
+      - name: Fail if dashboard.h was stale
+        # The header is committed for people building locally; if it disagrees with the
+        # HTML, whoever edited the page forgot to run the script.
+        run: |
+          if ! git diff --quiet -- 03_deployment/dashboard.h; then
+            echo "::error file=03_deployment/dashboard.h::dashboard.h is out of date. Run: python tools/build_dashboard.py"
+            exit 1
+          fi
+
+      - uses: arduino/setup-arduino-cli@v2
+        with:
+          version: ${{ env.ARDUINO_CLI_VERSION }}
+
+      - name: Install the ESP32 core
+        run: |
+          arduino-cli config init --overwrite
+          arduino-cli config add board_manager.additional_urls \
+            https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32@${ESP32_CORE}
+
+      - name: Cache the library folder
+        uses: actions/cache@v4
+        with:
+          path: ~/Arduino/libraries
+          key: libs-${{ hashFiles('.github/workflows/build-and-deploy.yml') }}
+
+      - name: Install libraries (pinned)
+        run: |
+          arduino-cli lib update-index
+          arduino-cli lib install \
+            "ArduinoJson@7.4.3" \
+            "Adafruit TCS34725@1.4.4" \
+            "Adafruit GFX Library@1.12.6" \
+            "Adafruit ST7735 and ST7789 Library@1.10.4" \
+            "Adafruit BusIO@1.17.4" \
+            "OneWire@2.3.8" \
+            "DallasTemperature@3.9.0" \
+            "HX711 Arduino Library@0.7.5" \
+            "Async TCP@3.4.9" \
+            "ESP Async WebServer@3.12.0"
+
+      - name: Compile all three sketches
+        # --libraries libs is what resolves #include <sensors.h>: the shared sensor code
+        # lives in libs/AquaMilkSensors so all three firmwares compile the same file.
+        run: |
+          set -e
+          for sketch in 01_calibration 02_collection 03_deployment; do
+            echo "::group::$sketch"
+            arduino-cli compile \
+              --fqbn "$FQBN" \
+              --libraries libs \
+              --output-dir "build/$sketch" \
+              --warnings default \
+              "$sketch"
+            echo "::endgroup::"
+          done
+
+      - name: Stage binaries and manifests into web/firmware
+        # The merged image holds bootloader + partition table + app, which is why the
+        # ESP Web Tools manifests place it at offset 0.
+        run: |
+          set -e
+          mkdir -p web/firmware
+          VERSION="${GITHUB_SHA::7}"
+          set -- "01_calibration:calibration:Calibration" \
+                 "02_collection:collection:Collection" \
+                 "03_deployment:deployment:Deployment"
+          for entry in "$@"; do
+            sketch="${entry%%:*}"
+            rest="${entry#*:}"
+            out="${rest%%:*}"
+            title="${rest#*:}"
+            merged=$(ls "build/$sketch"/*.ino.merged.bin)
+            cp "$merged" "web/firmware/$out.bin"
+            cat > "web/firmware/$out-manifest.json" <<JSON
+          {
+            "name": "Aqua Milk Detect — $title",
+            "version": "$VERSION",
+            "new_install_prompt_erase": true,
+            "builds": [
+              {
+                "chipFamily": "ESP32",
+                "parts": [{ "path": "$out.bin", "offset": 0 }]
+              }
+            ]
+          }
+          JSON
+          done
+
+      - name: Summarise
+        run: |
+          {
+            echo "### Firmware built from \`${GITHUB_SHA::7}\`"
+            echo
+            echo "| firmware | size |"
+            echo "|---|---|"
+            for f in web/firmware/*.bin; do
+              echo "| $(basename "$f") | $(du -h "$f" | cut -f1) |"
+            done
+            echo
+            if grep -q 'MODEL_IS_PLACEHOLDER 1' 03_deployment/model.h; then
+              echo '⚠️ `03_deployment/model.h` is still the placeholder — the deployment build will always answer "Uncertain". Run `training/train.py` and copy `model.h` + `scaler.h` into `03_deployment/`.'
+            else
+              echo '✅ A trained model is compiled into the deployment build.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Report the URL
+        run: |
+          {
+            echo "**Live at ${{ steps.deployment.outputs.page_url }}**"
+            echo
+            echo "Firmware manifests:"
+            for n in calibration collection deployment; do
+              echo "- ${{ steps.deployment.outputs.page_url }}firmware/$n-manifest.json"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"

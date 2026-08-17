@@ -7,11 +7,14 @@
 <meta name="description" content="Low-cost IoT + edge-ML tester that classifies milk as pure, water-, detergent- or starch-adulterated in seconds.">
 <link rel="icon" href="./logo.svg">
 <link rel="stylesheet" href="./app.css">
-<!-- Pinned to an exact version on purpose: a floating @10 tag would let a CDN
-     change swap the flashing code under you. Subresource-integrity hashes are not
-     usable here because this ES module fetches further chunks from unpkg at
-     runtime, which a single integrity attribute cannot cover. -->
-<script type="module" src="https://unpkg.com/esp-web-tools@10.0.4/dist/web/install-button.js"></script>
+<!-- esp-web-tools is vendored in web/vendor/esp-web-tools (v10.4.0, Apache-2.0, its
+     LICENSE sits beside it). Loading it from a CDN meant the Flash page depended on
+     unpkg.com being reachable and on the pinned URL existing — a dead link or a
+     script-blocking extension silently left the page with no install buttons. A local
+     copy also makes Subresource Integrity moot: the bundle fetches its own hashed
+     chunks at runtime, which no single integrity attribute covers.
+     To update: npm pack esp-web-tools@<v>, copy dist/web/*.js + LICENSE here. -->
+<script type="module" src="./vendor/esp-web-tools/install-button.js"></script>
 </head>
 <body>
 
