@@ -1,0 +1,73 @@
+name: deploy-web
+
+# Publishes web/ to GitHub Pages. Everything the app needs is already static, so there
+# is no build step — the folder is uploaded as-is, including web/firmware/*.bin, which
+# ESP Web Tools has to fetch over HTTPS.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - '.github/workflows/deploy-web.yml'
+  # Chained after the firmware build so freshly committed .bin files go live immediately.
+  workflow_run:
+    workflows: [build-firmware]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; a queued run replaces an older queued one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main          # workflow_run starts from the default ref; be explicit
+
+      - name: Check what will ship
+        run: |
+          {
+            echo "### Publishing \`web/\`"
+            echo
+            if ls web/firmware/*.bin >/dev/null 2>&1; then
+              echo "| firmware | size |"
+              echo "|---|---|"
+              for f in web/firmware/*.bin; do echo "| $(basename "$f") | $(du -h "$f" | cut -f1) |"; done
+            else
+              echo '⚠️ No `.bin` files in `web/firmware/` yet — the Flash page will have nothing to install until the **build-firmware** workflow has run once.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Report the URL
+        run: |
+          {
+            echo
+            echo "**Live at ${{ steps.deployment.outputs.page_url }}**"
+            echo
+            echo "Firmware manifests:"
+            for n in calibration collection deployment; do
+              echo "- ${{ steps.deployment.outputs.page_url }}firmware/$n-manifest.json"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"

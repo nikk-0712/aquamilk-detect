@@ -1,0 +1,203 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aqua Milk Detect</title>
+<style>
+:root{--accent:#0FB5C9;--accent-d:#0A8FA3;--green:#34C759;--red:#FF3B30;--amber:#FF9F0A;
+--bg:#F5F7FA;--card:#FFF;--text:#0B0F14;--muted:#6B7280;--line:rgba(0,0,0,.08);--r:18px}
+@media(prefers-color-scheme:dark){:root{--bg:#0B0F14;--card:#161B22;--text:#F5F7FA;--muted:#9AA4B2;--line:rgba(255,255,255,.1)}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0 auto;padding:16px;font:16px/1.45 -apple-system,"SF Pro Text",system-ui,sans-serif;
+background:var(--bg);color:var(--text);max-width:640px}
+h1{font-size:20px;letter-spacing:-.02em;margin:0}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px}
+header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--red);margin-left:auto;transition:background .3s}
+.dot.on{background:var(--green)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:14px;
+box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.04)}
+.verdict{display:flex;align-items:center;gap:18px}
+.vtext{flex:1;min-width:0}
+.vword{font-size:32px;font-weight:650;letter-spacing:-.03em;transition:color .25s}
+.vsub{color:var(--muted);font-size:14px;margin-top:2px}
+.reveal{animation:pop .32s cubic-bezier(.2,1.3,.4,1)}
+@keyframes pop{from{transform:scale(.94);opacity:.4}to{transform:scale(1);opacity:1}}
+.ring{width:92px;height:92px;flex:none}
+.ring circle{fill:none;stroke-width:9;stroke-linecap:round}
+.ring .bg{stroke:var(--line)}
+.ring .fg{transition:stroke-dashoffset .5s ease,stroke .25s}
+.ring text{font:600 20px -apple-system,system-ui;fill:var(--text);text-anchor:middle}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+button{flex:1;min-width:130px;min-height:48px;border:0;border-radius:14px;background:var(--accent);color:#fff;
+font:600 16px -apple-system,system-ui;cursor:pointer;transition:transform .15s,opacity .2s}
+button.sec{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+button:active{transform:scale(.97)}button:disabled{opacity:.45;cursor:default}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px}
+.k{color:var(--muted);font-size:12px}.v{font-size:17px;font-variant-numeric:tabular-nums}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{text-align:left;padding:7px 4px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th{color:var(--muted);font-weight:500;font-size:12px}
+label{display:block;font-size:14px;margin:14px 0 4px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=text],input[type=password],input[type=number],select{width:100%;padding:11px;border-radius:12px;
+border:1px solid var(--line);background:var(--bg);color:var(--text);font:15px -apple-system,system-ui}
+details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px;list-style:none}
+details summary::-webkit-details-marker{display:none}
+.warn{background:rgba(255,159,10,.14);border:1px solid var(--amber);
+border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:14px}
+.tabs{display:flex;gap:4px;background:var(--line);padding:3px;border-radius:12px;margin-bottom:14px}
+.tabs button{background:transparent;color:var(--text);min-height:36px;min-width:0;font-size:14px;border-radius:9px}
+.tabs button[aria-selected=true]{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+
+<header>
+<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c3.6 4.2 6.2 7.6 6.2 11a6.2 6.2 0 1 1-12.4 0c0-3.4 2.6-6.8 6.2-11z" fill="none" stroke="#0FB5C9" stroke-width="1.7"/><path d="M8.6 14.4c1.4.9 2.6-.9 4-.1s2.3.7 3 .1" fill="none" stroke="#0FB5C9" stroke-width="1.5" stroke-linecap="round"/></svg>
+<h1>Aqua Milk Detect</h1><span class="dot" id="dot" title="link"></span>
+</header>
+
+<div id="stub" class="warn" hidden>No trained model on this device — every test reports Uncertain. Train in <code>training/</code>, drop <code>model.h</code> + <code>scaler.h</code> into <code>03_deployment/</code>, reflash.</div>
+
+<div class="card verdict">
+  <svg class="ring" viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="42"/>
+  <circle class="fg" id="ring" cx="50" cy="50" r="42" stroke="var(--accent)" stroke-dasharray="264" stroke-dashoffset="264" transform="rotate(-90 50 50)"/>
+  <text id="ringt" x="50" y="57">–</text></svg>
+  <div class="vtext"><div class="vword" id="word">Ready</div>
+  <div class="vsub" id="sub">Tap the pad, or run a test below</div>
+  <div class="vsub" id="why"></div></div>
+</div>
+
+<div class="card"><div class="row">
+<button id="run">Run test</button><button id="flush" class="sec">Flush</button>
+</div></div>
+
+<div class="tabs" role="tablist">
+<button role="tab" aria-selected="true" data-t="live">Live</button>
+<button role="tab" aria-selected="false" data-t="hist">History</button>
+<button role="tab" aria-selected="false" data-t="set">Settings</button>
+</div>
+
+<section id="live">
+<div class="card"><h2>Sensors</h2><div class="grid" id="sens"></div></div>
+<div class="card"><h2>What drove the decision</h2><div id="zs"></div>
+<div class="vsub">Bars are how far each channel sits from the training average (standard deviations).</div></div>
+</section>
+
+<section id="hist" hidden>
+<div class="card"><h2>This session</h2><table><thead><tr><th>Ago</th><th>Verdict</th><th>Conf</th></tr></thead><tbody id="sess"></tbody></table></div>
+<div class="card"><h2>Device log (last 200)</h2><table><thead><tr><th>Uptime</th><th>Verdict</th><th>Conf</th><th>SG</th></tr></thead><tbody id="log"></tbody></table>
+<div class="row" style="margin-top:12px"><button class="sec" id="csv">Export CSV</button><button class="sec" id="reload">Reload log</button></div></div>
+</section>
+
+<section id="set" hidden>
+<div class="card"><h2>Test</h2>
+<label>Confidence threshold — <b id="thrv">0.60</b></label>
+<input type="range" id="thr" min="0.3" max="0.95" step="0.01">
+<label>Flush duration (ms)</label><input type="number" id="fms" min="0" max="60000" step="500">
+<label>Averaging window (ms)</label><input type="number" id="ams" min="200" max="20000" step="100">
+<div class="row" style="margin-top:14px"><button id="save">Save</button></div></div>
+
+<div class="card"><h2>Wi-Fi</h2><div class="vsub" id="wifi"></div>
+<label>Mode</label><select id="wmode"><option value="ap">SoftAP (own network)</option><option value="sta">Join a network</option></select>
+<label>SSID</label><input type="text" id="wssid" autocomplete="off">
+<label>Password</label><input type="password" id="wpass" autocomplete="off">
+<div class="row" style="margin-top:14px"><button id="wsave">Save &amp; reboot</button></div></div>
+
+<div class="card"><h2>Maintenance</h2><div class="row">
+<button class="sec" id="tare">Tare</button><button class="sec" id="stest">Re-check calibration</button></div>
+<details style="margin-top:14px"><summary>Factory reset</summary>
+<div class="vsub" style="margin:8px 0">Clears calibration, settings and Wi-Fi. The trained model stays (it is compiled in).</div>
+<button class="sec" id="fr" style="color:var(--red);border-color:var(--red)">Erase settings</button></details></div>
+
+<div class="card"><h2>Touch gestures</h2><table><tbody>
+<tr><td>Single tap</td><td>Run a test</td></tr><tr><td>Double tap</td><td>Flush now</td></tr>
+<tr><td>Long press 1.5 s</td><td>On-screen menu (tap = next, double tap = select)</td></tr>
+<tr><td>Tap, tap, hold</td><td>Sleep — a touch wakes it</td></tr></tbody></table></div>
+</section>
+
+<script>
+const $=i=>document.getElementById(i),F=["pH","TDS","Turbidity","Density","Temp","Red","Green","Blue","Clear"];
+let sess=[],last=null,ws,logRows=[];
+const col=v=>v.uncertain?"var(--amber)":(v.adulterated?"var(--red)":"var(--green)");
+const ago=ms=>{const s=Math.round(ms/1000);return s<60?s+"s":s<3600?Math.round(s/60)+"m":Math.round(s/3600)+"h"};
+const up=ms=>{const s=Math.round(ms/1000);return s<3600?Math.floor(s/60)+"m"+(s%60)+"s":Math.floor(s/3600)+"h"+Math.floor(s%3600/60)+"m"};
+
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
+  ["live","hist","set"].forEach(s=>$(s).hidden=s!==b.dataset.t);
+  if(b.dataset.t==="hist")loadLog();});
+
+function ring(p,c){$("ring").style.strokeDashoffset=264*(1-p);$("ring").style.stroke=c;
+  $("ringt").textContent=Math.round(p*100)+"%";}
+
+function showVerdict(v){last=v;
+  const w=$("word");w.textContent=v.uncertain?"Uncertain":v.cls[0].toUpperCase()+v.cls.slice(1);
+  w.style.color=col(v);w.classList.remove("reveal");void w.offsetWidth;w.classList.add("reveal");
+  $("sub").textContent=(v.uncertain?"Retest — confidence below threshold":
+    (v.adulterated?"Adulterated":"Pure"))+" · "+Math.round(v.p_adult*100)+"% adulterated";
+  $("why").textContent=v.reason||"";
+  ring(v.conf,col(v));
+  sess.unshift({t:Date.now(),v});renderSess();renderZ(v.z);}
+
+function renderSess(){$("sess").innerHTML=sess.slice(0,20).map(r=>
+  `<tr><td>${ago(Date.now()-r.t)}</td><td style="color:${col(r.v)}">${r.v.uncertain?"Uncertain":r.v.cls}</td>
+   <td>${Math.round(r.v.conf*100)}%</td></tr>`).join("")||`<tr><td colspan="3" class="k">No tests yet</td></tr>`;}
+
+function renderZ(z){if(!z)return;const m=Math.max(3,...z.map(Math.abs));
+  $("zs").innerHTML=z.map((x,i)=>`<div class="k" style="margin-top:8px">${F[i]} <b>${x.toFixed(1)}σ</b>
+  <div class="bar"><i style="width:${Math.min(100,Math.abs(x)/m*100)}%"></i></div></div>`).join("");}
+
+function renderSens(r){const c=r.calc||{};
+  const cells=[["pH",c.ph==null?(r.ph||0).toFixed(0)+" mV":c.ph.toFixed(2)],["TDS",(c.ppm||0).toFixed(0)+" ppm"],
+  ["Turbidity",(c.ntu||0).toFixed(0)+" NTU"],["Specific gravity",(c.sg||0).toFixed(3)],
+  ["Temperature",(r.temp||0).toFixed(1)+" °C"],["Weight",(r.dens||0).toFixed(1)+" g"],
+  ["Colour",`${r.r}/${r.g}/${r.b}`],["Clear",r.c]];
+  $("sens").innerHTML=cells.map(([k,v])=>`<div><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");}
+
+function status(s){if(s==="testing"){$("word").textContent="Reading…";$("word").style.color="var(--accent)";
+  $("sub").textContent="Averaging the sample";$("why").textContent="";}
+  else if(s==="flushing"){$("sub").textContent="Flushing the chamber";}
+  $("run").disabled=$("flush").disabled=(s!=="idle");}
+
+function connect(){ws=new WebSocket(`ws://${location.host}/ws`);
+  ws.onopen=()=>$("dot").classList.add("on");
+  ws.onclose=()=>{$("dot").classList.remove("on");setTimeout(connect,2000);};
+  ws.onmessage=e=>{const m=JSON.parse(e.data);
+    if(m.t==="reading")renderSens(m);else if(m.t==="result")showVerdict(m);
+    else if(m.t==="status")status(m.state);};}
+
+const post=(p,q="")=>fetch(p+(q?"?"+q:""),{method:"POST"});
+$("run").onclick=()=>post("/api/test");
+$("flush").onclick=()=>post("/api/flush");
+$("tare").onclick=()=>post("/api/tare").then(()=>alert("Chamber zeroed"));
+$("stest").onclick=()=>fetch("/api/selftest",{method:"POST"}).then(r=>r.json())
+  .then(j=>alert(j.ok?"All sensors responding":"Check wiring: "+j.why));
+$("fr").onclick=()=>confirm("Erase calibration, settings and Wi-Fi?")&&post("/api/factory_reset");
+$("save").onclick=()=>post("/api/settings",`thr=${$("thr").value}&flush_ms=${$("fms").value}&avg_ms=${$("ams").value}`)
+  .then(()=>alert("Saved"));
+$("wsave").onclick=()=>confirm("Save Wi-Fi and reboot the device?")&&
+  post("/api/wifi",`mode=${$("wmode").value}&ssid=${encodeURIComponent($("wssid").value)}&pass=${encodeURIComponent($("wpass").value)}`);
+$("thr").oninput=()=>$("thrv").textContent=(+$("thr").value).toFixed(2);
+$("reload").onclick=loadLog;
+$("csv").onclick=()=>{const rows=[["uptime_ms","verdict","confidence","ph_mv","tds_mv","turbidity_mv","sg","temp_c"]]
+  .concat(logRows.map(r=>[r.ms,r.cls,r.conf,r.ph,r.tds,r.turb,r.sg,r.temp]));
+  const b=new Blob([rows.map(r=>r.join(",")).join("\n")],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="aquamilk-log.csv";a.click();};
+
+function loadLog(){fetch("/api/log").then(r=>r.json()).then(j=>{logRows=j.rows||[];
+  $("log").innerHTML=logRows.slice().reverse().slice(0,200).map(r=>
+   `<tr><td>${up(r.ms)}</td><td>${r.cls}</td><td>${Math.round(r.conf*100)}%</td><td>${(+r.sg).toFixed(3)}</td></tr>`)
+   .join("")||`<tr><td colspan="4" class="k">Empty</td></tr>`;});}
+
+fetch("/api/state").then(r=>r.json()).then(s=>{
+  $("stub").hidden=!s.placeholder;
+  $("thr").value=s.thr;$("thrv").textContent=(+s.thr).toFixed(2);
+  $("fms").value=s.flush_ms;$("ams").value=s.avg_ms;
+  $("wmode").value=s.wifi.mode;$("wssid").value=s.wifi.mode==="sta"?s.wifi.ssid:"";
+  $("wifi").textContent=s.wifi.mode==="ap"?`SoftAP ${s.wifi.ssid} · ${s.wifi.ip}`
+    :`Joined ${s.wifi.ssid} · ${s.wifi.ip} · aquamilk.local`;
+  if(s.last)showVerdict(s.last);else renderZ(new Array(9).fill(0));
+  status(s.state);renderSess();});
+connect();
+</script></body></html>

@@ -1,0 +1,154 @@
+name: build-firmware
+
+# Compiles the three sketches and publishes the flashable binaries into web/firmware/,
+# where the Pages site's ESP Web Tools buttons pick them up. Every tool, core and
+# library version is pinned so a build today matches a build in six months.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '01_calibration/**'
+      - '02_collection/**'
+      - '03_deployment/**'
+      - 'libs/**'
+      - 'tools/build_dashboard.py'
+      - '.github/workflows/build-firmware.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  ARDUINO_CLI_VERSION: 1.1.1
+  ESP32_CORE: 3.3.10
+  # No OTA on this device, so give the app the space and keep 1 MB for LittleFS.
+  FQBN: esp32:esp32:esp32:PartitionScheme=huge_app
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Regenerate the device dashboard header
+        # Runs before the compile so the committed dashboard.h can never drift from
+        # dashboard.html. If it changes, it gets committed along with the binaries.
+        run: python tools/build_dashboard.py
+
+      - uses: arduino/setup-arduino-cli@v2
+        with:
+          version: ${{ env.ARDUINO_CLI_VERSION }}
+
+      - name: Install the ESP32 core
+        run: |
+          arduino-cli config init --overwrite
+          arduino-cli config add board_manager.additional_urls \
+            https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32@${ESP32_CORE}
+
+      - name: Cache the library folder
+        uses: actions/cache@v4
+        with:
+          path: ~/Arduino/libraries
+          key: libs-${{ hashFiles('.github/workflows/build-firmware.yml') }}
+
+      - name: Install libraries (pinned)
+        run: |
+          arduino-cli lib update-index
+          arduino-cli lib install \
+            "ArduinoJson@7.4.3" \
+            "Adafruit TCS34725@1.4.4" \
+            "Adafruit GFX Library@1.12.6" \
+            "Adafruit ST7735 and ST7789 Library@1.10.4" \
+            "Adafruit BusIO@1.17.4" \
+            "OneWire@2.3.8" \
+            "DallasTemperature@3.9.0" \
+            "HX711 Arduino Library@0.7.5" \
+            "Async TCP@3.4.9" \
+            "ESP Async WebServer@3.12.0"
+
+      - name: Compile all three sketches
+        # --libraries libs is what resolves #include <sensors.h>: the shared sensor code
+        # lives in libs/AquaMilkSensors so all three firmwares compile the same file.
+        # Any failure here fails the job loudly — no half-published binaries.
+        run: |
+          set -e
+          for sketch in 01_calibration 02_collection 03_deployment; do
+            echo "::group::$sketch"
+            arduino-cli compile \
+              --fqbn "$FQBN" \
+              --libraries libs \
+              --output-dir "build/$sketch" \
+              --warnings default \
+              "$sketch"
+            echo "::endgroup::"
+          done
+
+      - name: Collect binaries and manifests
+        # The merged image contains bootloader + partition table + app, which is why the
+        # ESP Web Tools manifests place it at offset 0.
+        run: |
+          set -e
+          mkdir -p web/firmware
+          VERSION="${GITHUB_SHA::7}"
+          set -- "01_calibration:calibration:Calibration" \
+                 "02_collection:collection:Collection" \
+                 "03_deployment:deployment:Deployment"
+          for entry in "$@"; do
+            sketch="${entry%%:*}"
+            rest="${entry#*:}"
+            out="${rest%%:*}"
+            title="${rest#*:}"
+            merged=$(ls "build/$sketch"/*.ino.merged.bin)
+            cp "$merged" "web/firmware/$out.bin"
+            cat > "web/firmware/$out-manifest.json" <<JSON
+          {
+            "name": "Aqua Milk Detect — $title",
+            "version": "$VERSION",
+            "new_install_prompt_erase": true,
+            "builds": [
+              {
+                "chipFamily": "ESP32",
+                "parts": [{ "path": "$out.bin", "offset": 0 }]
+              }
+            ]
+          }
+          JSON
+            echo "$out.bin -> $(du -h "web/firmware/$out.bin" | cut -f1)"
+          done
+
+      - name: Summarise
+        run: |
+          {
+            echo "### Firmware built from \`${GITHUB_SHA::7}\`"
+            echo
+            echo "| firmware | size |"
+            echo "|---|---|"
+            for f in web/firmware/*.bin; do
+              echo "| $(basename "$f") | $(du -h "$f" | cut -f1) |"
+            done
+            echo
+            if grep -q 'MODEL_IS_PLACEHOLDER 1' 03_deployment/model.h; then
+              echo '⚠️ `03_deployment/model.h` is still the placeholder — the deployment build will always answer "Uncertain". Run `training/train.py` and copy `model.h` + `scaler.h` into `03_deployment/`.'
+            else
+              echo '✅ A trained model is compiled into the deployment build.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit the binaries back
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/firmware 03_deployment/dashboard.h
+          if git diff --cached --quiet; then
+            echo "nothing changed"
+          else
+            git commit -m "ci: firmware binaries from ${GITHUB_SHA::7}"
+            git push
+          fi

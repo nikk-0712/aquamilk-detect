@@ -1,0 +1,55 @@
+/* tokens.css — the shared design system (PROJECT_CONTEXT.md §9).
+   The GitHub-hosted app imports this file; the device dashboard inlines the same
+   values (03_deployment/dashboard.html) because it has to be one self-contained
+   gzipped page. Change a value here, mirror it there. */
+
+:root {
+  /* brand */
+  --accent:        #0FB5C9;
+  --accent-strong: #0A8FA3;
+
+  /* result semantics — Apple system colours */
+  --pure:      #34C759;
+  --adulter:   #FF3B30;
+  --uncertain: #FF9F0A;
+
+  /* surfaces (light is the default theme) */
+  --bg:        #F5F7FA;
+  --bg-elev:   #FFFFFF;
+  --card:      #FFFFFF;
+  --card-blur: rgba(255, 255, 255, .72);
+  --text:      #0B0F14;
+  --text-mut:  #61707F;
+  --line:      rgba(0, 0, 0, .08);
+  --shadow-1:  0 1px 2px rgba(0, 0, 0, .04);
+  --shadow-2:  0 8px 30px rgba(11, 15, 20, .07);
+
+  /* shape, rhythm, motion */
+  --r-lg: 20px;
+  --r-md: 16px;
+  --r-sm: 12px;
+  --sp:   8px;              /* 8-pt grid: use multiples */
+  --ease: cubic-bezier(.32, .72, 0, 1);
+  --dur:  240ms;
+
+  --font: -apple-system, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:        #0B0F14;
+    --bg-elev:   #11161D;
+    --card:      #161B22;
+    --card-blur: rgba(22, 27, 34, .72);
+    --text:      #F5F7FA;
+    --text-mut:  #9AA4B2;
+    --line:      rgba(255, 255, 255, .10);
+    --shadow-1:  0 1px 2px rgba(0, 0, 0, .3);
+    --shadow-2:  0 8px 30px rgba(0, 0, 0, .35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur: 1ms; }
+}

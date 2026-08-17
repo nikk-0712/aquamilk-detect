@@ -1,0 +1,26 @@
+# Arduino / arduino-cli build output
+build/
+*.elf
+*.map
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Trainer artefacts (regenerate with train.py; model.h + scaler.h ARE committed)
+training/pipeline.joblib
+training/report/*.png
+training/report/*.json
+training/report/*.txt
+
+# Your own collected datasets stay local unless you deliberately add them.
+# The generated SYNTHETIC_sample.csv is committed so a fresh clone can train.
+training/data/*.csv
+!training/data/SYNTHETIC_sample.csv
+
+# OS noise
+Thumbs.db
+.DS_Store
+desktop.ini

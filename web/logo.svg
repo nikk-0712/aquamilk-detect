@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Aqua Milk Detect">
+  <title>Aqua Milk Detect</title>
+  <!-- A drop (the sample) with a wave through it (the reading). -->
+  <path d="M24 4c7.2 8.4 12.4 15.2 12.4 22a12.4 12.4 0 1 1-24.8 0C11.6 19.2 16.8 12.4 24 4z"
+        fill="none" stroke="#0FB5C9" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M15.4 28.2c2.9 1.9 5.3-1.9 8.6-.2s4.7 1.5 6.6.2"
+        fill="none" stroke="#0FB5C9" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="24" cy="35.6" r="1.6" fill="#0FB5C9"/>
+</svg>

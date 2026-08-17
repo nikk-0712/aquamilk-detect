@@ -1,0 +1,2 @@
+# Put CSVs exported from the web app's Collect page in this folder.
+# train.py globs data/*.csv and concatenates everything it finds.

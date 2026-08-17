@@ -1,0 +1,11 @@
+{
+  "name": "Aqua Milk Detect — Calibration",
+  "version": "dev-placeholder",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [{ "path": "calibration.bin", "offset": 0 }]
+    }
+  ]
+}

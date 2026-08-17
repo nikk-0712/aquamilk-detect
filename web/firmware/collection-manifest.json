@@ -1,0 +1,11 @@
+{
+  "name": "Aqua Milk Detect — Collection",
+  "version": "dev-placeholder",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [{ "path": "collection.bin", "offset": 0 }]
+    }
+  ]
+}

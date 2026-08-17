@@ -1,0 +1,12 @@
+# Pinned for reproducible training runs.
+scikit-learn==1.5.2
+pandas==2.2.3
+numpy==2.1.3
+matplotlib==3.9.2
+joblib==1.4.2
+
+# NOT micromlgen: its SVM port emits predict() only, and this product needs a
+# probability so it can answer "Uncertain" below a threshold. train.py exports
+# scikit-learn's own SVC internals instead (support vectors, dual coefficients,
+# intercepts, Platt probA_/probB_) and asserts the firmware's maths reproduces
+# predict_proba before writing model.h. See training/README.md.

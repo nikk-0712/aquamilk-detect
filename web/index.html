@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aqua Milk Detect — Milk purity in seconds</title>
+<meta name="description" content="Low-cost IoT + edge-ML tester that classifies milk as pure, water-, detergent- or starch-adulterated in seconds.">
+<link rel="icon" href="./logo.svg">
+<link rel="stylesheet" href="./app.css">
+<!-- Pinned to an exact version on purpose: a floating @10 tag would let a CDN
+     change swap the flashing code under you. Subresource-integrity hashes are not
+     usable here because this ES module fetches further chunks from unpkg at
+     runtime, which a single integrity attribute cannot cover. -->
+<script type="module" src="https://unpkg.com/esp-web-tools@10.0.4/dist/web/install-button.js"></script>
+</head>
+<body>
+
+<nav>
+  <span class="brand">
+    <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4c7.2 8.4 12.4 15.2 12.4 22a12.4 12.4 0 1 1-24.8 0C11.6 19.2 16.8 12.4 24 4z" fill="none" stroke="#0FB5C9" stroke-width="2.6" stroke-linejoin="round"/><path d="M15.4 28.2c2.9 1.9 5.3-1.9 8.6-.2s4.7 1.5 6.6.2" fill="none" stroke="#0FB5C9" stroke-width="2.4" stroke-linecap="round"/></svg>
+    Aqua Milk Detect
+  </span>
+  <span class="links">
+    <a href="#home">Home</a><a href="#flash">Flash</a><a href="#calibrate">Calibrate</a><a href="#collect">Collect</a><a href="#run">Run</a>
+  </span>
+</nav>
+
+<div class="wrap">
+
+<!-- ------------------------------------------------------------------ HOME -->
+<section id="home">
+  <div class="hero">
+    <svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4c7.2 8.4 12.4 15.2 12.4 22a12.4 12.4 0 1 1-24.8 0C11.6 19.2 16.8 12.4 24 4z" fill="none" stroke="#0FB5C9" stroke-width="2.6" stroke-linejoin="round"/><path d="M15.4 28.2c2.9 1.9 5.3-1.9 8.6-.2s4.7 1.5 6.6.2" fill="none" stroke="#0FB5C9" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="35.6" r="1.6" fill="#0FB5C9"/></svg>
+    <h1>Milk purity<br>in seconds.</h1>
+    <p class="lead">A pocket-size tester reads pH, conductivity, turbidity, colour, temperature and density,
+      then an on-device SVM calls the sample <b>pure</b>, <b>water</b>, <b>detergent</b> or <b>starch</b> —
+      and flushes itself clean for the next one.</p>
+    <p id="compat" class="note" hidden></p>
+  </div>
+
+  <div class="cards">
+    <a class="card" href="#flash"><h3>Flash</h3><p class="muted small">Put firmware on the ESP32 straight from this page.</p></a>
+    <a class="card" href="#calibrate"><h3>Calibrate</h3><p class="muted small">Check every sensor, set the zero and span points.</p></a>
+    <a class="card" href="#collect"><h3>Collect</h3><p class="muted small">Capture labelled samples, export the training CSV.</p></a>
+    <a class="card" href="#run"><h3>Run</h3><p class="muted small">Use the finished tester over its own Wi-Fi.</p></a>
+  </div>
+
+  <h2>How it works</h2>
+  <div class="cards">
+    <div class="card"><h3>1 · Calibrate</h3><p class="muted small">Flash the calibration firmware, zero each sensor. Constants are saved on the device.</p></div>
+    <div class="card"><h3>2 · Collect</h3><p class="muted small">Flash the collection firmware, capture pure and spiked samples. The CSV is written in your browser.</p></div>
+    <div class="card"><h3>3 · Train</h3><p class="muted small">Run the Python trainer on that CSV. It exports <code>model.h</code> + <code>scaler.h</code> and an honest report.</p></div>
+    <div class="card"><h3>4 · Deploy</h3><p class="muted small">Flash the deployment firmware. The device tests, decides and flushes on its own.</p></div>
+  </div>
+</section>
+
+<!-- ----------------------------------------------------------------- FLASH -->
+<section id="flash" hidden>
+  <h1>Flash</h1>
+  <p class="lead">Connect the ESP32 over USB and install one of the three firmwares. Desktop Chrome or Edge.</p>
+  <div class="cards">
+    <div class="card"><h3>Calibration</h3><p class="muted small">Stage 1 — read and calibrate every sensor from this page.</p>
+      <esp-web-install-button manifest="./firmware/calibration-manifest.json"><button slot="activate">Install calibration</button><span slot="unsupported">Use desktop Chrome or Edge.</span><span slot="not-allowed">Needs HTTPS.</span></esp-web-install-button></div>
+    <div class="card"><h3>Collection</h3><p class="muted small">Stage 2 — capture labelled samples into a CSV.</p>
+      <esp-web-install-button manifest="./firmware/collection-manifest.json"><button slot="activate">Install collection</button><span slot="unsupported">Use desktop Chrome or Edge.</span><span slot="not-allowed">Needs HTTPS.</span></esp-web-install-button></div>
+    <div class="card"><h3>Deployment</h3><p class="muted small">Stage 3 — the finished tester with its own Wi-Fi dashboard.</p>
+      <esp-web-install-button manifest="./firmware/deployment-manifest.json"><button slot="activate">Install deployment</button><span slot="unsupported">Use desktop Chrome or Edge.</span><span slot="not-allowed">Needs HTTPS.</span></esp-web-install-button></div>
+  </div>
+  <div class="card" style="margin-top:24px"><h3>If the board is not detected</h3>
+    <p class="muted small">Most DevKit boards enter the bootloader on their own. If yours does not: hold <b>BOOT</b>,
+    tap <b>EN/RST</b>, release <b>BOOT</b>, then pick the port again. A data-capable USB cable matters —
+    charge-only cables show no port at all.</p></div>
+</section>
+
+<!-- ------------------------------------------------------------- CALIBRATE -->
+<section id="calibrate" hidden>
+  <h1>Calibrate</h1>
+  <p class="lead">Flash the <b>calibration</b> firmware first, then connect. Every stored constant comes back from the device, so what you see is what it will use.</p>
+
+  <div class="card">
+    <div class="row">
+      <button data-connect="cal">Connect device</button>
+      <button class="ghost small" data-disconnect="cal" hidden>Disconnect</button>
+      <span class="pill"><span class="dot" data-dot="cal"></span><span data-status="cal">Not connected</span></span>
+    </div>
+  </div>
+
+  <div data-needs-link="cal" hidden>
+    <h2>Live values</h2>
+    <div class="card"><div class="grid" id="calLive"></div>
+      <div class="row" style="margin-top:20px">
+        <button class="ghost" id="selftest">Test all sensors</button>
+        <button class="ghost" id="calFlush">Flush test</button>
+        <span class="small muted" id="selftestOut"></span>
+      </div>
+    </div>
+
+    <h2>pH</h2>
+    <div class="card">
+      <p class="muted small">Two buffers give you a real pH number. No buffers? Stay in raw mode — the model trains on millivolts either way.</p>
+      <div class="row">
+        <button class="ghost" data-cal-ph="7">Capture pH 7.0</button>
+        <button class="ghost" data-cal-ph="4">Capture pH 4.0</button>
+        <span class="seg" role="group" aria-label="pH mode">
+          <button data-ph-mode="raw" aria-pressed="true">Raw mV</button>
+          <button data-ph-mode="cal" aria-pressed="false">Calibrated</button>
+        </span>
+      </div>
+    </div>
+
+    <h2>TDS · Turbidity · Colour</h2>
+    <div class="card">
+      <div class="row">
+        <input type="number" id="tdsPpm" placeholder="known solution ppm (optional)" style="max-width:260px">
+        <button class="ghost" id="calTds">Calibrate TDS</button>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="ghost" id="calTurb">Set clear-water zero</button>
+        <button class="ghost" id="calWhite">Set white reference</button>
+      </div>
+      <p class="muted small" style="margin-top:12px">Fill the chamber with distilled water before the last two.</p>
+    </div>
+
+    <h2>Density</h2>
+    <div class="card">
+      <div class="row">
+        <button class="ghost" id="tare">Tare (empty chamber)</button>
+        <input type="number" id="knownG" placeholder="known weight in grams" style="max-width:220px">
+        <button class="ghost" id="calSpan">Set span</button>
+      </div>
+      <label for="chamberMl">Chamber volume (mL) — specific gravity is grams ÷ this</label>
+      <div class="row"><input type="number" id="chamberMl" style="max-width:200px"><button class="ghost small" id="saveChamber">Save</button></div>
+    </div>
+
+    <h2>Stored constants</h2>
+    <div class="card scroll"><table id="calTable"><tbody></tbody></table>
+      <div class="row" style="margin-top:16px"><button class="ghost small" id="factory">Factory reset</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- --------------------------------------------------------------- COLLECT -->
+<section id="collect" hidden>
+  <h1>Collect</h1>
+  <p class="lead">Flash the <b>collection</b> firmware, label the sample, hit Capture. Each capture is one averaged row; the CSV lives in this tab until you export it.</p>
+
+  <div class="card">
+    <div class="row">
+      <button data-connect="col">Connect device</button>
+      <button class="ghost small" data-disconnect="col" hidden>Disconnect</button>
+      <span class="pill"><span class="dot" data-dot="col"></span><span data-status="col">Not connected</span></span>
+    </div>
+  </div>
+
+  <div data-needs-link="col" hidden>
+    <h2>Label</h2>
+    <div class="card">
+      <label>Milk type</label>
+      <span class="seg" role="group" aria-label="Milk type">
+        <button data-milk="cow" aria-pressed="true">Cow</button>
+        <button data-milk="buffalo" aria-pressed="false">Buffalo</button>
+        <button data-milk="toned" aria-pressed="false">Toned</button>
+      </span>
+      <label>Adulterant</label>
+      <span class="seg" role="group" aria-label="Adulterant">
+        <button data-adu="pure" aria-pressed="true">Pure</button>
+        <button data-adu="water" aria-pressed="false">Water</button>
+        <button data-adu="detergent" aria-pressed="false">Detergent</button>
+        <button data-adu="starch" aria-pressed="false">Starch</button>
+      </span>
+      <label for="level">Level (%) — 0 for pure</label>
+      <input type="number" id="level" value="0" min="0" max="100" step="1" style="max-width:160px">
+      <label for="source">Source — dairy, shop, person, place</label>
+      <input type="text" id="source" placeholder="e.g. Amul pouch / local dairy / lab prep">
+    </div>
+
+    <h2>Live values</h2>
+    <div class="card"><div class="grid" id="colLive"></div>
+      <div class="row" style="margin-top:20px">
+        <button id="capture">Capture sample</button>
+        <button class="ghost" id="colFlush">Flush</button>
+        <button class="ghost" id="colTare">Tare</button>
+        <span class="small muted" id="colStatus"></span>
+      </div>
+    </div>
+
+    <h2>Dataset <span class="muted" style="font-size:16px">(<span id="rowCount">0</span> rows)</span></h2>
+    <div class="card">
+      <div class="counts" id="counts"></div>
+      <div class="scroll" style="margin-top:16px"><table id="rows"><thead><tr>
+        <th>Time</th><th>Milk</th><th>Adulterant</th><th>%</th><th>Source</th><th>Temp</th>
+        <th>pH mV</th><th>TDS mV</th><th>Turb mV</th><th>Grams</th><th>R</th><th>G</th><th>B</th><th>Clear</th>
+      </tr></thead><tbody></tbody></table></div>
+      <div class="row" style="margin-top:16px">
+        <button id="exportCsv">Export CSV</button>
+        <button class="ghost small" id="undoRow">Remove last row</button>
+        <button class="ghost small" id="clearRows">Clear all</button>
+      </div>
+      <p class="muted small" style="margin-top:12px">Nothing is uploaded and nothing is stored — reloading this tab loses unexported rows.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ------------------------------------------------------------------- RUN -->
+<section id="run" hidden>
+  <h1>Run</h1>
+  <p class="lead">The finished tester is standalone. It serves its own dashboard, so you open that instead of this page.</p>
+
+  <div class="card">
+    <h3>Three steps</h3>
+    <ol class="muted">
+      <li>Power the device. The TFT shows its Wi-Fi name and password.</li>
+      <li>Join <b>AquaMilk-XXXX</b> from your phone or laptop (<code>XXXX</code> = the last two bytes of its MAC).</li>
+      <li>Open <b>http://192.168.4.1</b> — verdict, live sensors, history, settings.</li>
+    </ol>
+    <div class="row"><button class="ghost" id="copyIp">Copy http://192.168.4.1</button>
+      <span class="small muted" id="copyOut"></span></div>
+    <p class="muted small" style="margin-top:16px">Told it to join your own Wi-Fi in Settings? Then it also answers at
+      <code>http://aquamilk.local</code> (mDNS). The pad alone works with no phone at all:
+      tap to test, double tap to flush, long-press for the menu.</p>
+  </div>
+
+  <div class="card">
+    <h3>Why the dashboard is not embedded here</h3>
+    <p class="muted small">This page is served over HTTPS and the device speaks plain HTTP on your local
+      network. Browsers block that mix, and an ESP32 cannot hold a trusted certificate for a private IP.
+      So the dashboard ships <i>on the device</i> — same design language, no internet required.</p>
+  </div>
+</section>
+
+</div>
+
+<footer>Aqua Milk Detect · MIT · Nikhil · Web Serial and browser flashing need desktop Chrome or Edge</footer>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
