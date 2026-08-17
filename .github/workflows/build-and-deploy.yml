@@ -50,17 +50,15 @@ jobs:
           python-version: '3.12'
 
       - name: Regenerate the device dashboard header
-        # Before compiling, so a stale committed dashboard.h can never ship.
+        # Always regenerated here, before compiling, so a stale committed dashboard.h can
+        # never ship regardless of what is in the repo.
+        #
+        # There used to be a "fail if it differs from the committed copy" check. It
+        # demanded byte-identical gzip output between a contributor's machine and this
+        # runner, which zlib does not guarantee across versions — so it failed on a
+        # perfectly correct header. The committed copy exists only so a local
+        # `arduino-cli compile` works without running Python first.
         run: python tools/build_dashboard.py
-
-      - name: Fail if dashboard.h was stale
-        # The header is committed for people building locally; if it disagrees with the
-        # HTML, whoever edited the page forgot to run the script.
-        run: |
-          if ! git diff --quiet -- 03_deployment/dashboard.h; then
-            echo "::error file=03_deployment/dashboard.h::dashboard.h is out of date. Run: python tools/build_dashboard.py"
-            exit 1
-          fi
 
       - uses: arduino/setup-arduino-cli@v2
         with:
