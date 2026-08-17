@@ -117,4 +117,9 @@ td { font-variant-numeric: tabular-nums; }
 .counts .pill b { font-variant-numeric: tabular-nums; }
 
 esp-web-install-button { display: block; margin-top: 16px; }
+/* Until the custom element upgrades it has no shadow root, so every <span slot="…">
+   inside it renders at once — "Install", "Use desktop Chrome", "Needs HTTPS" all
+   stacked. Hide the element until it is defined; app.js shows a fallback notice if the
+   module never loads (blocked CDN, offline, locked-down network). */
+esp-web-install-button:not(:defined) { display: none; }
 footer { padding: 40px 24px; text-align: center; color: var(--text-mut); font-size: 13px; }

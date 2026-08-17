@@ -34,6 +34,21 @@ if (!supported()) {
     : "<b>This browser cannot talk to the device.</b> Web Serial and browser flashing exist only in desktop Chrome and Edge. Everything else on this site still works.";
 }
 
+// ------------------------------------------------------- flashing availability
+// esp-web-tools is an ES module from a CDN. If it cannot load — offline, blocked
+// domain, locked-down network — the install buttons stay hidden (app.css hides the
+// element until it upgrades) and the Flash page would just look empty. Say what
+// happened and give the command-line way out.
+setTimeout(() => {
+  if (customElements.get("esp-web-install-button")) return;
+  const n = $("#flashFallback");
+  n.hidden = false;
+  n.innerHTML = "<b>The flashing tool did not load.</b> It is fetched from unpkg.com, so " +
+    "an offline or restricted network stops it. Flash from a clone instead:<br>" +
+    '<code class="mono">arduino-cli upload -p COM5 ' +
+    "--fqbn esp32:esp32:esp32:PartitionScheme=huge_app 01_calibration</code>";
+}, 5000);
+
 // ---------------------------------------------------------- shared link logic
 // Two pages, two independent links — you connect on whichever page you are using.
 function makeLink(key, onMessage) {

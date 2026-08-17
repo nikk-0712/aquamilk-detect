@@ -9,7 +9,10 @@ __pycache__/
 .venv/
 venv/
 
-# Trainer artefacts (regenerate with train.py; model.h + scaler.h ARE committed)
+# Trainer outputs. The committed contract lives in 03_deployment/ (placeholders until
+# you train); what train.py drops in training/ is a build artefact you copy across.
+training/model.h
+training/scaler.h
 training/pipeline.joblib
 training/report/*.png
 training/report/*.json

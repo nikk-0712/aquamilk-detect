@@ -188,8 +188,12 @@ $("csv").onclick=()=>{const rows=[["uptime_ms","verdict","confidence","ph_mv","t
 function loadLog(){fetch("/api/log").then(r=>r.json()).then(j=>{logRows=j.rows||[];
   $("log").innerHTML=logRows.slice().reverse().slice(0,200).map(r=>
    `<tr><td>${up(r.ms)}</td><td>${r.cls}</td><td>${Math.round(r.conf*100)}%</td><td>${(+r.sg).toFixed(3)}</td></tr>`)
-   .join("")||`<tr><td colspan="4" class="k">Empty</td></tr>`;});}
+   .join("")||`<tr><td colspan="4" class="k">Empty</td></tr>`;})
+  .catch(()=>{$("log").innerHTML=`<tr><td colspan="4" class="k">Could not read the log</td></tr>`;});}
 
+// Boot state. The .catch matters: without it one failed request (device rebooting,
+// Wi-Fi dropped mid-load) throws and NOTHING below it ever runs — no settings values,
+// no placeholder banner, no tables — leaving a page that looks broken with no reason.
 fetch("/api/state").then(r=>r.json()).then(s=>{
   $("stub").hidden=!s.placeholder;
   $("thr").value=s.thr;$("thrv").textContent=(+s.thr).toFixed(2);
@@ -198,6 +202,9 @@ fetch("/api/state").then(r=>r.json()).then(s=>{
   $("wifi").textContent=s.wifi.mode==="ap"?`SoftAP ${s.wifi.ssid} · ${s.wifi.ip}`
     :`Joined ${s.wifi.ssid} · ${s.wifi.ip} · aquamilk.local`;
   if(s.last)showVerdict(s.last);else renderZ(new Array(9).fill(0));
-  status(s.state);renderSess();});
+  status(s.state);renderSess();})
+ .catch(()=>{$("word").textContent="No device";$("word").style.color="var(--amber)";
+  $("sub").textContent="Cannot reach the tester — retrying";
+  $("wifi").textContent="unknown";renderZ(new Array(9).fill(0));renderSess();});
 connect();
 </script></body></html>

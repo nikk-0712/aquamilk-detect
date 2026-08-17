@@ -66,6 +66,8 @@
     <div class="card"><h3>Deployment</h3><p class="muted small">Stage 3 — the finished tester with its own Wi-Fi dashboard.</p>
       <esp-web-install-button manifest="./firmware/deployment-manifest.json"><button slot="activate">Install deployment</button><span slot="unsupported">Use desktop Chrome or Edge.</span><span slot="not-allowed">Needs HTTPS.</span></esp-web-install-button></div>
   </div>
+  <p id="flashFallback" class="note" style="margin-top:24px" hidden></p>
+
   <div class="card" style="margin-top:24px"><h3>If the board is not detected</h3>
     <p class="muted small">Most DevKit boards enter the bootloader on their own. If yours does not: hold <b>BOOT</b>,
     tap <b>EN/RST</b>, release <b>BOOT</b>, then pick the port again. A data-capable USB cable matters —
