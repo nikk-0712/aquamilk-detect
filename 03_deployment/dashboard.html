@@ -12,14 +12,14 @@
 --rim-cool:rgba(255,255,255,.10);--rim-dim:rgba(255,255,255,.28);
 --ribbon:rgba(255,255,255,.085);
 --stroke:rgba(255,255,255,.14);--hi:rgba(255,255,255,.55);--sheen:rgba(255,255,255,.26);
---edge-t:rgba(255,255,255,.45);--edge-b:rgba(0,0,0,.35);--trough:rgba(255,255,255,.055);--hover:rgba(255,255,255,.09);--accent-soft:rgba(127,243,255,.16);
+--edge-t:rgba(255,255,255,.45);--edge-b:rgba(0,0,0,.35);--trough:rgba(255,255,255,.055);--hover:rgba(255,255,255,.09);--accent-soft:rgba(127,243,255,.16);--menu:rgba(22,26,32,.9);--menu-line:rgba(255,255,255,.07);
 --aop:.28;--ease:cubic-bezier(.4,0,.2,1);color-scheme:dark}
 @media(prefers-color-scheme:light){:root{--bg:#EEF1F5;--text:#1D1D1F;--muted:#6E6E73;
 --accent-ink:#067A8B;--line:rgba(0,0,0,.1);--glass:rgba(255,255,255,.42);--glass-s:rgba(255,255,255,.62);
 --rim-hot:rgba(255,255,255,.98);--rim-warm:rgba(255,255,255,.55);
 --rim-cool:rgba(16,20,28,.06);--rim-dim:rgba(16,20,28,.10);--ribbon:rgba(16,20,28,.05);
 --stroke:rgba(16,20,28,.08);--hi:rgba(255,255,255,.95);--sheen:rgba(255,255,255,.6);
---edge-t:rgba(255,255,255,.95);--edge-b:rgba(16,20,28,.07);--trough:rgba(255,255,255,.55);--hover:rgba(16,20,28,.05);--accent-soft:rgba(15,181,201,.14);--aop:.3;color-scheme:light}}
+--edge-t:rgba(255,255,255,.95);--edge-b:rgba(16,20,28,.07);--trough:rgba(255,255,255,.55);--hover:rgba(16,20,28,.05);--accent-soft:rgba(15,181,201,.14);--menu:rgba(250,251,253,.94);--menu-line:rgba(16,20,28,.07);--aop:.3;color-scheme:light}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0 auto;padding:16px;font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
 background:var(--bg);color:var(--text);max-width:640px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -138,7 +138,11 @@ background-repeat:no-repeat;background-position:right 15px center}
 /* Custom listbox. A native select's option popup is OS chrome — it cannot be blurred,
    rounded or tinted, which is why it kept appearing as a white slab in the middle of
    the glass. This is the same control rebuilt from elements we own. */
-.sel{position:relative}
+.sel{position:relative;z-index:1}
+/* .card sets isolation:isolate, so each card is its own stacking context and a
+   z-index inside one cannot rise above a LATER card. The open menu was being
+   painted under the next card. Lift the whole card instead. */
+.card.menuopen{z-index:60}
 .selbtn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
 padding:13px 15px;min-height:46px;min-width:0;border:0;border-radius:14px;
 font:15px -apple-system,BlinkMacSystemFont,system-ui;color:var(--text);text-align:left;
@@ -152,13 +156,16 @@ box-shadow:0 0 0 .5px var(--stroke) inset,0 .5px 0 0 var(--edge-t) inset}
 box-shadow:0 0 0 1px var(--accent) inset,0 0 0 4px var(--accent-soft)}
 .selbtn svg{width:13px;height:13px;color:var(--muted);flex:none;transition:transform .25s var(--ease)}
 .selbtn[aria-expanded=true] svg{transform:rotate(180deg)}
-.sellist{position:absolute;z-index:30;top:calc(100% + 8px);left:0;right:0;margin:0;padding:6px;
+/* Thick material, not sheer: a menu floating over other fields has to occlude them.
+   At card transparency the SSID label underneath read straight through the options. */
+.sellist{position:absolute;z-index:60;top:calc(100% + 8px);left:0;right:0;margin:0;padding:6px;
 list-style:none;border-radius:18px;
-background:var(--glass-s);
-backdrop-filter:blur(26px) saturate(160%) brightness(1.06);
--webkit-backdrop-filter:blur(26px) saturate(160%) brightness(1.06);
-box-shadow:0 0 0 .5px var(--stroke) inset,0 .5px 0 0 var(--edge-t) inset,0 18px 40px rgba(0,0,0,.5);
+background:var(--menu);
+backdrop-filter:blur(30px) saturate(170%);-webkit-backdrop-filter:blur(30px) saturate(170%);
+box-shadow:0 0 0 .5px var(--stroke) inset,0 .5px 0 0 var(--edge-t) inset,
+0 20px 46px rgba(0,0,0,.62),0 4px 12px rgba(0,0,0,.4);
 animation:selin .18s var(--ease) both;transform-origin:top center}
+.sellist li+li{box-shadow:0 -.5px 0 0 var(--menu-line)}
 @keyframes selin{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}
 .sellist li{padding:11px 13px;border-radius:12px;font-size:15px;cursor:pointer;
 display:flex;align-items:center;justify-content:space-between;gap:8px;
@@ -319,7 +326,8 @@ function connect(){ws=new WebSocket(`ws://${location.host}/ws`);
 // Wi-Fi POST below is unchanged.
 (()=>{const sel=$("wsel"),btn=sel.querySelector(".selbtn"),list=sel.querySelector(".sellist"),
 lab=btn.querySelector("span"),items=[...list.querySelectorAll("li")];
-const open=o=>{list.hidden=!o;btn.setAttribute("aria-expanded",o);
+const card=sel.closest(".card");
+const open=o=>{list.hidden=!o;btn.setAttribute("aria-expanded",o);card&&card.classList.toggle("menuopen",o);
  if(o){const i=items.findIndex(x=>x.getAttribute("aria-selected")==="true");items.forEach(x=>x.classList.remove("on"));
  (items[i]||items[0]).classList.add("on")}};
 const pick=li=>{items.forEach(x=>x.setAttribute("aria-selected",String(x===li)));
