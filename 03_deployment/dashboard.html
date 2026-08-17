@@ -20,16 +20,22 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0 auto;padding:16px;font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
 background:var(--bg);color:var(--text);max-width:640px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-/* the backdrop the glass refracts */
-.aurora{position:fixed;inset:-20vmax;z-index:-2;pointer-events:none;opacity:var(--aop);
-filter:blur(64px) saturate(140%)}
-.aurora i{position:absolute;width:52vmax;height:52vmax;border-radius:50%;mix-blend-mode:screen;
-animation:drift 38s var(--ease) infinite alternate}
-.aurora i:nth-child(1){background:radial-gradient(circle,#0FB5C9,transparent 62%);top:-6vmax;left:-4vmax}
-.aurora i:nth-child(2){background:radial-gradient(circle,#1E6BFF,transparent 62%);top:6vmax;right:-8vmax;animation-duration:46s;animation-delay:-9s}
-.aurora i:nth-child(3){background:radial-gradient(circle,#12E1A8,transparent 62%);bottom:-8vmax;left:10vmax;animation-duration:54s;animation-delay:-20s}
-@keyframes drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(6vmax,-5vmax,0) scale(1.16)}}
+/* The backdrop the glass refracts. inset:0 + overflow:clip so a blurred blob can never
+   push the page sideways. One colour family — brand teal, indigo shadow, pale cyan
+   light — rather than a spread of unrelated hues. */
+.aurora{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:clip;opacity:var(--aop);
+filter:blur(72px) saturate(125%)}
+.aurora i{position:absolute;width:64vmax;height:64vmax;border-radius:50%;mix-blend-mode:screen;
+animation:drift 44s var(--ease) infinite alternate}
+.aurora i:nth-child(1){background:radial-gradient(circle,#0FB5C9,transparent 66%);top:-20%;left:-10%}
+.aurora i:nth-child(2){background:radial-gradient(circle,#143A7A,transparent 66%);top:8%;left:28%;animation-duration:53s;animation-delay:-11s}
+.aurora i:nth-child(3){background:radial-gradient(circle,#8FE9F5,transparent 70%);top:38%;left:4%;width:46vmax;height:46vmax;opacity:.55;animation-duration:61s;animation-delay:-23s}
+@keyframes drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(5%,-4%,0) scale(1.14)}}
 @media(prefers-color-scheme:light){.aurora i{mix-blend-mode:normal}}
+@media(prefers-reduced-motion:reduce){.aurora i{animation:none}}
+/* slim translucent scrollbar rather than the default slab */
+html{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;overflow-x:clip}
+@media(prefers-color-scheme:light){html{scrollbar-color:rgba(16,20,28,.22) transparent}}
 h1{font-size:20px;letter-spacing:-.02em;margin:0}
 h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px}
 header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
@@ -45,7 +51,17 @@ box-shadow:0 .5px 0 0 var(--edge-t) inset,0 -.5px 0 0 var(--edge-b) inset,
 /* specular sweep — the lit edge that separates glass from a tinted box */
 .card::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none;
 background:linear-gradient(118deg,var(--sheen) 0%,transparent 24%,transparent 76%,rgba(255,255,255,.08) 100%);
-opacity:.5}
+opacity:.5;
+/* chromatic fringe: a lens splits light at its edge — cool above, warm below */
+box-shadow:0 1px 0 -.5px rgba(120,220,255,.22) inset,0 -1px 0 -.5px rgba(255,170,120,.14) inset}
+/* Refracting rim: the outer 12px gets its own, stronger backdrop-filter, masked to a
+   ring. A lens bends light hardest at its edge — this is the closest the web gets, since
+   backdrop-filter:url() is unsupported everywhere. */
+.card::after{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none;
+backdrop-filter:blur(6px) brightness(1.2) saturate(1.3);-webkit-backdrop-filter:blur(6px) brightness(1.2) saturate(1.3);
+padding:12px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+mask-composite:exclude}
 .verdict{display:flex;align-items:center;gap:18px}
 .vtext{flex:1;min-width:0}
 .vword{font-size:clamp(28px,8vw,38px);font-weight:700;letter-spacing:-.03em;line-height:1.05;transition:color .25s}

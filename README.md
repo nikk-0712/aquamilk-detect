@@ -250,4 +250,4 @@ GitHub Actions.
 - This is a screening instrument, not a laboratory assay. It tells you a sample looks
   wrong and deserves a real test.
 
-MIT licensed. Author: Nikhil.
+MIT licensed.

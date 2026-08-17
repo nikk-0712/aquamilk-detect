@@ -6,7 +6,7 @@
 Create the repository **`aquamilk-detect`** under the user's connected GitHub account with the layout in §10, an MIT license, a great README, and **GitHub Actions** that (a) compile the three Arduino sketches to `.bin` and (b) deploy the web app to **GitHub Pages** — so browser-flashing and the hosted UI "just work."
 
 ## Repo setup
-- Create repo `aquamilk-detect` (public, MIT, author Nikhil). Add `PROJECT_CONTEXT.md` at root (from this project). Folders per §10.
+- Create repo `aquamilk-detect` (public, MIT). Add `PROJECT_CONTEXT.md` at root (from this project). Folders per §10.
 - `README.md`: project intro + tagline, the **wiring guide** (pin map §3 as a table + a note on the ADC dividers §3 and the **IRF520 2N2222 level-shift** §4), power diagram, the three-stage workflow, how to flash from the web app, how to collect data, how to train, and how to run the deployed device (SoftAP/`aquamilk.local`). Generate a simple wiring diagram (Mermaid or an SVG in `docs/`).
 
 ## Workflow A — build firmware (`.github/workflows/build-firmware.yml`)

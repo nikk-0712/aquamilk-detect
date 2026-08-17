@@ -21,9 +21,16 @@
 
   /* ---------------- dark: the primary appearance ---------------- */
   /* Not pure black: the aurora needs somewhere to sit, and #000 crushes the glass. */
-  --bg:       #07090C;
+  --bg:       #05070A;
   --text:     #F7F8FA;
   --text-mut: #9BA1AA;
+
+  /* chromatic fringe: real glass splits light at its edges, ever so slightly */
+  --fringe-cool: rgba(120, 220, 255, .22);
+  --fringe-warm: rgba(255, 170, 120, .14);
+
+  --scrollbar:       rgba(255, 255, 255, .18);
+  --scrollbar-hover: rgba(255, 255, 255, .32);
 
   /* the material */
   --glass:        linear-gradient(158deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .05));
@@ -46,12 +53,14 @@
   --drop-1: 0 8px 24px rgba(0, 0, 0, .42);
   --drop-2: 0 20px 52px rgba(0, 0, 0, .52);
 
-  /* backdrop */
-  --aurora-1: #0FB5C9;
-  --aurora-2: #1E6BFF;
-  --aurora-3: #12E1A8;
-  --aurora-4: #7A5CFF;
-  --aurora-opacity: .62;
+  /* Backdrop. Four saturated hues (teal/blue/mint/violet) read as a crayon box; this is
+     one family — brand teal, a deep indigo shadow, a pale cyan light source — with a
+     single warm ember for the contrast that keeps a cool palette from feeling clinical. */
+  --aurora-1: #0FB5C9;   /* brand teal, the anchor */
+  --aurora-2: #143A7A;   /* deep indigo, shadow side */
+  --aurora-3: #8FE9F5;   /* pale cyan, the light */
+  --aurora-4: #C2643C;   /* dim ember, warmth only */
+  --aurora-opacity: .45;
   /* Soft and late. A heavy vignette starved the centre column of colour, so the glass
      blurred near-black and every card came out a flat grey box. */
   --vignette: rgba(3, 5, 8, .45);
@@ -109,8 +118,12 @@
     --drop-1: 0 8px 24px rgba(16, 24, 40, .09);
     --drop-2: 0 20px 52px rgba(16, 24, 40, .14);
 
-    --aurora-opacity: .42;
+    --aurora-opacity: .34;
     --vignette: rgba(236, 239, 244, .45);
+    --fringe-cool: rgba(60, 170, 220, .18);
+    --fringe-warm: rgba(220, 140, 90, .12);
+    --scrollbar:       rgba(16, 20, 28, .22);
+    --scrollbar-hover: rgba(16, 20, 28, .36);
   }
 }
 

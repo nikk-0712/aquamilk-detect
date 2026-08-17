@@ -21,6 +21,7 @@ function route() {
     else a.removeAttribute("aria-current");
   });
   scrollTo({ top: 0 });
+  moveNavPill();
 }
 addEventListener("hashchange", route);
 route();
@@ -38,17 +39,52 @@ if (!supported()) {
 // no observer to construct, no class bookkeeping, and nothing can leave content hidden if
 // the script fails, which an opacity:0-until-JS approach can.
 
-// ------------------------------------------------------------ glass highlight
-// Liquid Glass reacts to the pointer. CSS cannot read cursor position, so feed it in:
-// each glass surface gets --mx/--my and its ::after paints a soft specular bloom there.
-// Delegated listener, percentages only, no layout reads beyond the hovered element.
-addEventListener("pointermove", e => {
-  const el = e.target.closest?.(".card, .glass");
-  if (!el) return;
-  const r = el.getBoundingClientRect();
-  el.style.setProperty("--mx", `${((e.clientX - r.left) / r.width) * 100}%`);
-  el.style.setProperty("--my", `${((e.clientY - r.top) / r.height) * 100}%`);
-}, { passive: true });
+// ----------------------------------------------------------- micro-interactions
+// CSS cannot read the pointer, so feed it in. Everything below writes custom properties
+// only — no classes, no layout thrash — and it is all skipped under reduced motion.
+const MOTION_OK = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+if (MOTION_OK) {
+  addEventListener("pointermove", e => {
+    // glass surfaces: the specular bloom follows the cursor and the card leans into it
+    const card = e.target.closest?.(".card, .glass");
+    if (card) {
+      const r = card.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width;
+      const py = (e.clientY - r.top) / r.height;
+      card.style.setProperty("--mx", `${px * 100}%`);
+      card.style.setProperty("--my", `${py * 100}%`);
+      card.style.setProperty("--ry", `${(px - .5) * 4}deg`);   // 2 degrees max
+      card.style.setProperty("--rx", `${(.5 - py) * 4}deg`);
+    }
+    // buttons drift a few pixels toward the cursor
+    const btn = e.target.closest?.("button, .btn");
+    if (btn) {
+      const r = btn.getBoundingClientRect();
+      btn.style.setProperty("--bx", `${((e.clientX - r.left) / r.width - .5) * 6}px`);
+      btn.style.setProperty("--by", `${((e.clientY - r.top) / r.height - .5) * 4}px`);
+    }
+  }, { passive: true });
+
+  // Release cleanly, or a card stays cocked at an angle after the pointer leaves.
+  addEventListener("pointerout", e => {
+    const el = e.target.closest?.(".card, .glass, button, .btn");
+    if (!el || el.contains(e.relatedTarget)) return;
+    for (const p of ["--rx", "--ry", "--bx", "--by"]) el.style.removeProperty(p);
+  }, { passive: true });
+}
+
+// The nav pill: one object that slides and resizes between links, instead of four
+// backgrounds switching on and off.
+function moveNavPill() {
+  const links = $(".links");
+  const active = $("nav a[aria-current='page']");
+  if (!links || !active) return;
+  links.style.setProperty("--nx", `${active.offsetLeft}px`);
+  links.style.setProperty("--nw", `${active.offsetWidth}px`);
+  links.style.setProperty("--nvis", "1");
+}
+addEventListener("resize", moveNavPill, { passive: true });
 
 // ------------------------------------------------------- flashing availability
 // esp-web-tools is vendored (web/vendor/esp-web-tools) so there is no CDN to fail,

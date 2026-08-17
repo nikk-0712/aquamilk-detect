@@ -45,9 +45,10 @@
   <div class="hero">
     <svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4c7.2 8.4 12.4 15.2 12.4 22a12.4 12.4 0 1 1-24.8 0C11.6 19.2 16.8 12.4 24 4z" fill="none" stroke="#0FB5C9" stroke-width="2.6" stroke-linejoin="round"/><path d="M15.4 28.2c2.9 1.9 5.3-1.9 8.6-.2s4.7 1.5 6.6.2" fill="none" stroke="#0FB5C9" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="35.6" r="1.6" fill="#0FB5C9"/></svg>
     <h1>Milk purity<br><span class="gradient-text">in seconds.</span></h1>
-    <p class="lead">A pocket-size tester reads pH, conductivity, turbidity, colour, temperature and density,
-      then an on-device SVM calls the sample <b>pure</b>, <b>water</b>, <b>detergent</b> or <b>starch</b> —
-      and flushes itself clean for the next one.</p>
+    <p class="lead">Six sensors read pH, conductivity, turbidity, colour, temperature and density.
+      A support-vector model runs on the device itself and calls the sample
+      <b>pure</b>, <b>water</b>, <b>detergent</b> or <b>starch</b> — then the chamber flushes
+      itself clean for the next one.</p>
     <div class="row">
       <a class="btn" href="#flash">Flash a device</a>
       <button class="ghost" onclick="location.hash='#calibrate'">Start calibrating</button>
@@ -59,19 +60,15 @@
   <h2 class="reveal">Everything the device needs, in one place</h2>
   <div class="cards bento">
     <a class="card reveal" href="#flash">
-      <span class="shine" aria-hidden="true"><i></i></span>
       <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></span>
       <h3>Flash</h3><p class="muted small">Install any of the three firmwares over USB, straight from this page.</p></a>
     <a class="card reveal" href="#calibrate">
-      <span class="shine" aria-hidden="true"><i></i></span>
       <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg></span>
       <h3>Calibrate</h3><p class="muted small">Zero and span every sensor, then keep the constants on the device.</p></a>
     <a class="card reveal" href="#collect">
-      <span class="shine" aria-hidden="true"><i></i></span>
       <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3.6 4.2 6 7.4 6 10.5a6 6 0 1 1-12 0C6 10.4 8.4 7.2 12 3z"/></svg></span>
       <h3>Collect</h3><p class="muted small">Capture labelled samples and export the training CSV, all in the browser.</p></a>
     <a class="card reveal" href="#run">
-      <span class="shine" aria-hidden="true"><i></i></span>
       <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4.5 9.5a10 10 0 0 1 15 0M7.5 13a6 6 0 0 1 9 0"/><circle cx="12" cy="17.5" r="1.3" fill="currentColor" stroke="none"/></svg></span>
       <h3>Run</h3><p class="muted small">Test from the touch pad, or from the dashboard it serves over its own Wi-Fi.</p></a>
   </div>
@@ -264,7 +261,7 @@
 
 </div>
 
-<footer>Aqua Milk Detect · MIT · Nikhil · Web Serial and browser flashing need desktop Chrome or Edge</footer>
+<footer>Aqua Milk Detect · MIT · Web Serial and browser flashing need desktop Chrome or Edge</footer>
 <script type="module" src="./app.js"></script>
 </body>
 </html>

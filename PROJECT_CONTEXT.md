@@ -194,7 +194,7 @@ aquamilk-detect/
 ```
 
 ## 11. Global conventions
-- License **MIT**. Author: Nikhil.
+- License **MIT**.
 - Each sample/test **averages ~3 s** of readings. Auto-flush default **5 s** (adjustable in Settings).
 - Confidence threshold default **0.60** (Settings).
 - Store calibration constants + settings + rolling log in **NVS (`Preferences`)**; larger logs/assets in **LittleFS**.
