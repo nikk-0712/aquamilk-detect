@@ -1,48 +1,43 @@
 /* tokens.css — the shared design system (PROJECT_CONTEXT.md §9).
    index.html links this file directly; the device dashboard inlines the same values
    (03_deployment/dashboard.html) because it has to be one self-contained gzipped page.
-   Change a value here, mirror it there.
 
-   Three groups: brand accent, result semantics, and the glass material. Dark is the
-   primary appearance — glass needs a dark, colourful backdrop to read as glass at all.
-   Light mode swaps the material for a white-tinted one so the same components work. */
+   Theme resolution, in order:
+     1. :root                                  → dark, the default
+     2. prefers-color-scheme: light             → light, unless the user forced dark
+     3. [data-theme="light"|"dark"]             → an explicit choice from the toggle
+   The light values appear twice on purpose — CSS cannot share one declaration block
+   between a media query and an attribute selector, and the toggle has to be able to
+   beat the system preference in both directions. */
 
 :root {
-  /* brand */
+  /* --------------------------------------------------------------- dark (default) */
+  /* Brand teal is the fill colour. It is NOT legible as small text or a thin icon on a
+     teal-lit glass panel, which is exactly what went wrong — so anything that has to be
+     READ uses --accent-ink, which is pushed far brighter than the brand tone. */
   --accent:        #0FB5C9;
   --accent-strong: #0A8FA3;
-  --accent-soft:   rgba(15, 181, 201, .15);
+  --accent-ink:    #7FF3FF;   /* icons, eyebrows, links — high luminance on purpose */
+  --accent-soft:   rgba(127, 243, 255, .16);
   --accent-glow:   rgba(15, 181, 201, .34);
 
-  /* result semantics — Apple system colours */
   --pure:      #34C759;
   --adulter:   #FF3B30;
-  --uncertain: #FF9F0A;
+  --uncertain: #FFB340;
 
-  /* ---------------- dark: the primary appearance ---------------- */
-  /* Not pure black: the aurora needs somewhere to sit, and #000 crushes the glass. */
   --bg:       #05070A;
   --text:     #F7F8FA;
-  --text-mut: #9BA1AA;
+  --text-mut: #A8AFB8;
 
-  /* chromatic fringe: real glass splits light at its edges, ever so slightly */
-  --fringe-cool: rgba(120, 220, 255, .22);
-  --fringe-warm: rgba(255, 170, 120, .14);
-
-  --scrollbar:       rgba(255, 255, 255, .18);
-  --scrollbar-hover: rgba(255, 255, 255, .32);
-
-  /* The material. Real liquid glass is defined by its RIM and its blur, not by a white
-     fill — in any Apple example the panel is essentially transparent with a bright,
-     varying edge. Anything above ~5% fill reads as tinted plastic. */
+  /* The material: defined by rim and blur, not by fill. Above ~5% fill it stops
+     transmitting and starts looking like tinted plastic. */
   --glass:        rgba(255, 255, 255, .045);
   --glass-strong: rgba(255, 255, 255, .085);
   --glass-blur:   26px;
   --glass-sat:    140%;
-  --glass-bright: 1.08;          /* glass transmits slightly more light than it blocks */
+  --glass-bright: 1.08;
 
-  /* The rim, brightest where the light strikes and fading away from it. This gradient
-     is the single most important part of the material. */
+  /* The rim, brightest where the light strikes and fading away from it. */
   --rim-hot:  rgba(255, 255, 255, .92);
   --rim-warm: rgba(255, 255, 255, .34);
   --rim-cool: rgba(255, 255, 255, .10);
@@ -50,53 +45,39 @@
   --glass-stroke: rgba(255, 255, 255, .14);
   --glass-sheen:  rgba(255, 255, 255, .22);
 
-  /* light ribbons behind the glass — detail for the blur to smear */
-  --ribbon: rgba(255, 255, 255, .10);
-
-  /* glass thickness: lit top edge, shaded bottom edge */
-  --edge-top:    rgba(255, 255, 255, .45);
-  --edge-bottom: rgba(0, 0, 0, .35);
-
-  /* recessed surfaces: troughs, inputs, tiles */
+  --ribbon:     rgba(255, 255, 255, .10);
   --trough:     rgba(255, 255, 255, .055);
   --hover-wash: rgba(255, 255, 255, .09);
   --line:       rgba(255, 255, 255, .09);
 
-  /* drop shadows — wide and soft, never a hard offset */
+  --edge-top:    rgba(255, 255, 255, .45);
+  --edge-bottom: rgba(0, 0, 0, .35);
+  --fringe-cool: rgba(120, 220, 255, .22);
+  --fringe-warm: rgba(255, 170, 120, .14);
+
   --drop-1: 0 8px 24px rgba(0, 0, 0, .42);
   --drop-2: 0 20px 52px rgba(0, 0, 0, .52);
 
-  /* Backdrop. Four saturated hues (teal/blue/mint/violet) read as a crayon box; this is
-     one family — brand teal, a deep indigo shadow, a pale cyan light source — with a
-     single warm ember for the contrast that keeps a cool palette from feeling clinical. */
-  --aurora-1: #0FB5C9;   /* brand teal, the anchor */
-  --aurora-2: #143A7A;   /* deep indigo, shadow side */
-  --aurora-3: #8FE9F5;   /* pale cyan, the light */
-  --aurora-4: #C2643C;   /* dim ember, warmth only */
+  --aurora-1: #0FB5C9;
+  --aurora-2: #143A7A;
+  --aurora-3: #8FE9F5;
+  --aurora-4: #C2643C;
   --aurora-opacity: .45;
-  /* Soft and late. A heavy vignette starved the centre column of colour, so the glass
-     blurred near-black and every card came out a flat grey box. */
   --vignette: rgba(3, 5, 8, .45);
 
-  /* radii — capsules and generous corners, iOS 26 style */
+  --scrollbar:       rgba(255, 255, 255, .18);
+  --scrollbar-hover: rgba(255, 255, 255, .32);
+
   --r-sm:   14px;
   --r-md:   18px;
   --r-lg:   24px;
   --r-2xl:  28px;
   --r-full: 980px;
 
-  /* 8-pt spacing scale */
-  --space-1:  .25rem;
-  --space-2:  .5rem;
-  --space-3:  .75rem;
-  --space-4:  1rem;
-  --space-6:  1.5rem;
-  --space-8:  2rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
+  --space-1: .25rem; --space-2: .5rem;  --space-3: .75rem; --space-4: 1rem;
+  --space-6: 1.5rem; --space-8: 2rem;   --space-12: 3rem;  --space-16: 4rem;
   --space-24: 6rem;
 
-  /* motion */
   --dur-fast: 150ms;
   --dur:      300ms;
   --dur-slow: 560ms;
@@ -107,43 +88,93 @@
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
           system-ui, "Segoe UI", sans-serif;
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+  color-scheme: dark;
 }
 
-/* ---------------- light: same components, white-tinted glass ---------------- */
+/* ------------------------------------------------------------------------ light */
 @media (prefers-color-scheme: light) {
-  :root {
-    --bg:       #ECEFF4;
-    --text:     #17181B;
-    --text-mut: #6B7078;
+  :root:not([data-theme="dark"]) {
+    --accent-ink:  #067A8B;          /* dark enough to read on white glass */
+    --accent-soft: rgba(15, 181, 201, .14);
+    --bg:       #E9EDF2;
+    --text:     #15171A;
+    --text-mut: #5C636D;
 
     --glass:        rgba(255, 255, 255, .42);
     --glass-strong: rgba(255, 255, 255, .62);
     --glass-bright: 1.04;
+
     --rim-hot:  rgba(255, 255, 255, .98);
     --rim-warm: rgba(255, 255, 255, .55);
     --rim-cool: rgba(16, 20, 28, .06);
     --rim-dim:  rgba(16, 20, 28, .10);
     --glass-stroke: rgba(16, 20, 28, .08);
     --glass-sheen:  rgba(255, 255, 255, .6);
-    --ribbon: rgba(16, 20, 28, .05);
 
-    --edge-top:    rgba(255, 255, 255, .95);
-    --edge-bottom: rgba(16, 20, 28, .07);
-
+    --ribbon:     rgba(16, 20, 28, .05);
     --trough:     rgba(255, 255, 255, .55);
     --hover-wash: rgba(16, 20, 28, .05);
     --line:       rgba(16, 20, 28, .09);
 
+    --edge-top:    rgba(255, 255, 255, .95);
+    --edge-bottom: rgba(16, 20, 28, .07);
+    --fringe-cool: rgba(60, 170, 220, .18);
+    --fringe-warm: rgba(220, 140, 90, .12);
+
     --drop-1: 0 8px 24px rgba(16, 24, 40, .09);
     --drop-2: 0 20px 52px rgba(16, 24, 40, .14);
 
-    --aurora-opacity: .34;
-    --vignette: rgba(236, 239, 244, .45);
-    --fringe-cool: rgba(60, 170, 220, .18);
-    --fringe-warm: rgba(220, 140, 90, .12);
+    --aurora-opacity: .3;
+    --vignette: rgba(233, 237, 242, .45);
+
     --scrollbar:       rgba(16, 20, 28, .22);
     --scrollbar-hover: rgba(16, 20, 28, .36);
+
+    color-scheme: light;
   }
+}
+
+/* Same values again, for an explicit light choice from the toggle (see the note at the
+   top — a media query and an attribute selector cannot share one block). */
+:root[data-theme="light"] {
+  --accent-ink:  #067A8B;
+  --accent-soft: rgba(15, 181, 201, .14);
+  --bg:       #E9EDF2;
+  --text:     #15171A;
+  --text-mut: #5C636D;
+
+  --glass:        rgba(255, 255, 255, .42);
+  --glass-strong: rgba(255, 255, 255, .62);
+  --glass-bright: 1.04;
+
+  --rim-hot:  rgba(255, 255, 255, .98);
+  --rim-warm: rgba(255, 255, 255, .55);
+  --rim-cool: rgba(16, 20, 28, .06);
+  --rim-dim:  rgba(16, 20, 28, .10);
+  --glass-stroke: rgba(16, 20, 28, .08);
+  --glass-sheen:  rgba(255, 255, 255, .6);
+
+  --ribbon:     rgba(16, 20, 28, .05);
+  --trough:     rgba(255, 255, 255, .55);
+  --hover-wash: rgba(16, 20, 28, .05);
+  --line:       rgba(16, 20, 28, .09);
+
+  --edge-top:    rgba(255, 255, 255, .95);
+  --edge-bottom: rgba(16, 20, 28, .07);
+  --fringe-cool: rgba(60, 170, 220, .18);
+  --fringe-warm: rgba(220, 140, 90, .12);
+
+  --drop-1: 0 8px 24px rgba(16, 24, 40, .09);
+  --drop-2: 0 20px 52px rgba(16, 24, 40, .14);
+
+  --aurora-opacity: .3;
+  --vignette: rgba(233, 237, 242, .45);
+
+  --scrollbar:       rgba(16, 20, 28, .22);
+  --scrollbar-hover: rgba(16, 20, 28, .36);
+
+  color-scheme: light;
 }
 
 @media (prefers-reduced-motion: reduce) {

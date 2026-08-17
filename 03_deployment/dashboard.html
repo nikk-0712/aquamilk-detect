@@ -5,7 +5,7 @@
 /* Same design language as web/design/tokens.css — aqua-teal on liquid glass. Inlined
    because this page has to be one self-contained gzipped file in PROGMEM. Dark first:
    glass needs a dark, coloured backdrop to read as glass. */
-:root{--accent:#0FB5C9;--accent-d:#0A8FA3;--green:#34C759;--red:#FF3B30;--amber:#FF9F0A;
+:root{--accent:#0FB5C9;--accent-d:#0A8FA3;--accent-ink:#7FF3FF;--green:#34C759;--red:#FF3B30;--amber:#FF9F0A;
 --bg:#07090C;--text:#F5F5F7;--muted:#A1A1A6;--line:rgba(255,255,255,.1);--r:26px;
 --glass:rgba(255,255,255,.045);--glass-s:rgba(255,255,255,.085);
 --rim-hot:rgba(255,255,255,.92);--rim-warm:rgba(255,255,255,.34);
@@ -15,7 +15,7 @@
 --edge-t:rgba(255,255,255,.45);--edge-b:rgba(0,0,0,.35);--trough:rgba(255,255,255,.055);
 --aop:.5;--ease:cubic-bezier(.4,0,.2,1)}
 @media(prefers-color-scheme:light){:root{--bg:#EEF1F5;--text:#1D1D1F;--muted:#6E6E73;
---line:rgba(0,0,0,.1);--glass:rgba(255,255,255,.42);--glass-s:rgba(255,255,255,.62);
+--accent-ink:#067A8B;--line:rgba(0,0,0,.1);--glass:rgba(255,255,255,.42);--glass-s:rgba(255,255,255,.62);
 --rim-hot:rgba(255,255,255,.98);--rim-warm:rgba(255,255,255,.55);
 --rim-cool:rgba(16,20,28,.06);--rim-dim:rgba(16,20,28,.10);--ribbon:rgba(16,20,28,.05);
 --stroke:rgba(16,20,28,.08);--hi:rgba(255,255,255,.95);--sheen:rgba(255,255,255,.6);
@@ -53,7 +53,7 @@ to{transform:translate3d(6%,-4vh,0) rotate(-7deg) scaleY(1.3)}}
 html{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;overflow-x:clip}
 @media(prefers-color-scheme:light){html{scrollbar-color:rgba(16,20,28,.22) transparent}}
 h1{font-size:20px;letter-spacing:-.02em;margin:0}
-h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-ink);margin:0 0 10px}
 header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--red);margin-left:auto;transition:background .3s}
 .dot.on{background:var(--green)}
@@ -109,7 +109,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px}
 .k{color:var(--muted);font-size:12px}.v{font-size:17px;font-variant-numeric:tabular-nums}
 .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:4px}
-.bar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.bar i{display:block;height:100%;background:var(--accent-ink);border-radius:3px}
 table{width:100%;border-collapse:collapse;font-size:14px}
 td,th{text-align:left;padding:7px 4px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
 th{color:var(--muted);font-weight:500;font-size:12px}
@@ -134,8 +134,8 @@ box-shadow:0 1px 0 var(--hi) inset,0 4px 14px rgba(0,0,0,.32)}
 <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
 <div class="mesh" aria-hidden="true"><b></b><b></b><b></b></div>
 
-<header>
-<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c3.6 4.2 6.2 7.6 6.2 11a6.2 6.2 0 1 1-12.4 0c0-3.4 2.6-6.8 6.2-11z" fill="none" stroke="#0FB5C9" stroke-width="1.7"/><path d="M8.6 14.4c1.4.9 2.6-.9 4-.1s2.3.7 3 .1" fill="none" stroke="#0FB5C9" stroke-width="1.5" stroke-linecap="round"/></svg>
+<header style="color:var(--accent-ink)">
+<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c3.6 4.2 6.2 7.6 6.2 11a6.2 6.2 0 1 1-12.4 0c0-3.4 2.6-6.8 6.2-11z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8.6 14.4c1.4.9 2.6-.9 4-.1s2.3.7 3 .1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
 <h1>Aqua Milk Detect</h1><span class="dot" id="dot" title="link"></span>
 </header>
 

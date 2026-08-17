@@ -78,6 +78,26 @@ if (MOTION_OK) {
   }, { passive: true });
 }
 
+// ---------------------------------------------------------------------- theme
+// Explicit light/dark choice, remembered. With no choice stored the page follows the
+// system, which is why the attribute is only ever set when the user actually picks.
+// localStorage holds a display preference, not data — the no-storage rule in
+// PROJECT_CONTEXT §? is about collected samples, which still never touch disk.
+const THEME_KEY = "amd-theme";
+function applyTheme(mode) {
+  if (mode === "light" || mode === "dark") document.documentElement.dataset.theme = mode;
+  else delete document.documentElement.dataset.theme;
+}
+try { applyTheme(localStorage.getItem(THEME_KEY)); } catch {}
+
+$("#theme")?.addEventListener("click", () => {
+  const current = document.documentElement.dataset.theme
+    || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+  const next = current === "light" ? "dark" : "light";
+  applyTheme(next);
+  try { localStorage.setItem(THEME_KEY, next); } catch {}
+});
+
 // The nav pill: one object that slides and resizes between links, instead of four
 // backgrounds switching on and off.
 function moveNavPill() {

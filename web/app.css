@@ -199,6 +199,28 @@ nav .brand { display: flex; align-items: center; gap: var(--space-2);
   font-size: 15px; font-weight: 600; letter-spacing: -.012em; white-space: nowrap; }
 nav .brand svg { width: 21px; height: 21px; }
 nav .links { display: flex; gap: 2px; margin-left: auto; flex-wrap: wrap; }
+
+/* Theme toggle: a small glass capsule holding sun/moon. Switches between light and
+   dark explicitly; without a choice the page follows the system. */
+.theme {
+  flex: none; width: 40px; height: 40px; min-height: 0; padding: 0;
+  display: grid; place-items: center;
+  border-radius: var(--r-full);
+  background: var(--trough); color: var(--text);
+  box-shadow: 0 0 0 .5px var(--glass-stroke) inset, 0 .5px 0 0 var(--edge-top) inset;
+}
+.theme:hover { background: var(--hover-wash); box-shadow: 0 0 0 .5px var(--glass-stroke) inset;
+  filter: none; }
+.theme svg { width: 18px; height: 18px; transition: transform var(--dur) var(--spring),
+  opacity var(--dur) var(--ease); }
+.theme .moon { display: none; }
+:root[data-theme="light"] .theme .moon { display: block; }
+:root[data-theme="light"] .theme .sun  { display: none; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .theme .moon { display: block; }
+  :root:not([data-theme="dark"]) .theme .sun  { display: none; }
+}
+.theme:active svg { transform: rotate(-35deg) scale(.9); }
 nav a {
   padding: 8px 15px; border-radius: var(--r-full); text-decoration: none;
   color: var(--text-mut); font-size: 14.5px; font-weight: 500; letter-spacing: -.006em;
@@ -244,7 +266,7 @@ h3 { font-size: 18px; letter-spacing: -.014em; font-weight: 600; margin: 0 0 6px
 .eyebrow {
   display: block; margin: var(--space-24) 0 var(--space-2);
   font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .eyebrow + h2 { margin-top: 0; }
 
@@ -288,15 +310,23 @@ a.card:hover { transform: translateY(-6px); box-shadow:
 :not(.cards) > .card + .card { margin-top: var(--space-4); }
 .stack { display: grid; gap: var(--space-4); }
 
-/* Card icon: small glass chip holding a stroked glyph. */
+/* Tile header: icon and title on one line, title carrying real weight. Stacking them
+   left the heading looking like a caption under a badge. */
+.card-head { display: flex; align-items: center; gap: var(--space-3);
+  margin-bottom: var(--space-3); }
+.card-head h3 { margin: 0; font-size: 23px; font-weight: 650; letter-spacing: -.02em; }
+
+/* Icon chip. The glyph uses --accent-ink, not the brand teal: a teal stroke on a
+   teal-lit glass panel sits at nearly the same luminance as its background and simply
+   disappears, which is what made this unreadable. */
 .chip {
-  display: grid; place-items: center; width: 38px; height: 38px;
-  margin-bottom: var(--space-4); border-radius: 12px;
+  display: grid; place-items: center; width: 40px; height: 40px; flex: none;
+  border-radius: 13px;
   background: var(--accent-soft);
-  box-shadow: 0 0 0 .5px var(--glass-stroke) inset;
-  color: var(--accent);
+  box-shadow: 0 0 0 .5px var(--glass-stroke) inset, 0 .5px 0 0 var(--edge-top) inset;
+  color: var(--accent-ink);
 }
-.chip svg { width: 19px; height: 19px; }
+.chip svg { width: 20px; height: 20px; }
 
 /* Centred hero, Apple product-page style. Left-aligned in a 1040px column on a wide
    display left the buttons looking off-centre and the whole page weighted to one side. */
