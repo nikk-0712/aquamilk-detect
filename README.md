@@ -8,9 +8,8 @@ says **Uncertain** — in a few seconds, using six sensors and an on-device SVM.
 its own chamber between tests, shows the verdict on a TFT, and serves its own Wi-Fi
 dashboard with no internet involved.
 
-<!-- Replace OWNER with your GitHub username once the repo is pushed. -->
-[![build-firmware](https://github.com/OWNER/aquamilk-detect/actions/workflows/build-firmware.yml/badge.svg)](https://github.com/OWNER/aquamilk-detect/actions/workflows/build-firmware.yml)
-[![deploy-web](https://github.com/OWNER/aquamilk-detect/actions/workflows/deploy-web.yml/badge.svg)](https://github.com/OWNER/aquamilk-detect/actions/workflows/deploy-web.yml)
+[![build-firmware](https://github.com/nikk-0712/aquamilk-detect/actions/workflows/build-firmware.yml/badge.svg)](https://github.com/nikk-0712/aquamilk-detect/actions/workflows/build-firmware.yml)
+[![deploy-web](https://github.com/nikk-0712/aquamilk-detect/actions/workflows/deploy-web.yml/badge.svg)](https://github.com/nikk-0712/aquamilk-detect/actions/workflows/deploy-web.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0FB5C9.svg)](LICENSE)
 
 SDGs: 3 (Good Health), 9 (Industry & Innovation), 12 (Responsible Consumption).
