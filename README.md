@@ -136,9 +136,17 @@ Full connection-by-connection list and the power budget: [docs/wiring.md](docs/w
 ### Flash
 
 Easiest path: open the Pages site in **desktop Chrome or Edge** → **Flash** → pick a
-firmware. That is why CI exists; the `.bin` files are published next to the site.
+firmware. That is why CI exists; the `.bin` files are published next to the site. You
+never tell the page a COM port — Chrome shows its own serial-device picker when you click
+Install, and you choose your board there (`USB-SERIAL CH340 (COM7)` or similar). If the
+board is not in that list it is a driver or cable problem: install the CH340/CP2102
+driver and use a data-capable cable, not a charge-only one.
 
-From a clone instead:
+From a clone instead. Find your port first — **`COM5` below is only an example**:
+
+```bash
+arduino-cli board list
+```
 
 ```bash
 arduino-cli compile --fqbn esp32:esp32:esp32:PartitionScheme=huge_app --libraries libs 01_calibration

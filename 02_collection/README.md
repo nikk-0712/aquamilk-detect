@@ -7,7 +7,8 @@ namespace, so **calibrate before you collect**.
 
 ## Flash it
 
-Web app: **Flash → Collection firmware**. Or:
+Web app: **Flash → Collection firmware** (Chrome asks which device; no port to configure).
+Or, with your own port from `arduino-cli board list` in place of the example `COM5`:
 
 ```bash
 arduino-cli compile --fqbn esp32:esp32:esp32 --libraries libs 02_collection

@@ -7,7 +7,6 @@ assignments are authoritative in
 
 ## Signal map
 
-```mermaid
 flowchart TB
   subgraph esp["ESP32-WROOM-32 DevKit V1"]
     direction LR
@@ -32,8 +31,7 @@ flowchart TB
   PWM --> Q["2N2222 level shifter"] --> M["IRF520 module"] --> P["6 V pump"]
   PAD["TTP223 pad"] --> TCH
 
-  classDef in fill:#0FB5C9,color:#fff,stroke:none
-```
+  classDef in fill:#0FB5C9,color:#fff,stroke:none;
 
 ## Connection list
 

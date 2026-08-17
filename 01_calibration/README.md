@@ -6,9 +6,11 @@ USB Web Serial. No Wi-Fi in this firmware.
 
 ## Flash it
 
-From the web app (easiest): **Flash → Calibration firmware** in desktop Chrome/Edge.
+From the web app (easiest): **Flash → Calibration firmware** in desktop Chrome/Edge. The
+page does not need a COM port — Chrome asks you to pick the device.
 
-From the command line:
+From the command line. Check your port with `arduino-cli board list`; the `COM5` below is
+just an example:
 
 ```bash
 arduino-cli compile --fqbn esp32:esp32:esp32 --libraries libs 01_calibration

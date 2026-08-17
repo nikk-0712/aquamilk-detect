@@ -45,7 +45,7 @@ setTimeout(() => {
   n.hidden = false;
   n.innerHTML = "<b>The flashing tool did not load.</b> It is fetched from unpkg.com, so " +
     "an offline or restricted network stops it. Flash from a clone instead:<br>" +
-    '<code class="mono">arduino-cli upload -p COM5 ' +
+    '<code class="mono">arduino-cli upload -p YOUR_PORT ' +
     "--fqbn esp32:esp32:esp32:PartitionScheme=huge_app 01_calibration</code>";
 }, 5000);
 
