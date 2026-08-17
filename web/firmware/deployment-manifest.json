@@ -1,6 +1,6 @@
 {
   "name": "Aqua Milk Detect — Deployment",
-  "version": "dev-placeholder",
+  "version": "34108fa",
   "new_install_prompt_erase": true,
   "builds": [
     {
