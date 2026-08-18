@@ -38,12 +38,15 @@ body {
   min-height: 100%;
   max-width: 100%;
   overflow-x: clip;
-  font: 17px/1.55 var(--font);
+  font-family: var(--font);
+  font-size: var(--fs-base);
+  line-height: 1.55;
   font-feature-settings: "kern" 1, "liga" 1;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ------------------------------------------------------------------ backdrop */
@@ -177,13 +180,15 @@ body {
 }
 
 /* ------------------------------------------------------------------ layout */
-.wrap { max-width: 1040px; margin: 0 auto; padding: 0 var(--space-6) var(--space-24); }
+/* --col widens smoothly past ~1730px instead of stepping at a breakpoint, and the
+   gutter is a fluid token, so the column and its margins scale together. */
+.wrap { max-width: var(--col); margin: 0 auto; padding: 0 var(--space-6) var(--space-24); }
 
 /* Floating glass capsule, inset from the edges like an iOS 26 toolbar. */
 nav {
   position: sticky; top: var(--space-3); z-index: 20;
   display: flex; align-items: center; gap: var(--space-6);
-  width: min(1040px, calc(100% - var(--space-6) * 2));
+  width: min(var(--col), calc(100% - var(--space-6) * 2));
   margin: var(--space-3) auto var(--space-12);
   padding: 7px var(--space-3) 7px var(--space-4);
   border-radius: var(--r-full);
@@ -196,13 +201,36 @@ nav {
     var(--drop-1);
 }
 nav .brand { display: flex; align-items: center; gap: var(--space-2);
-  font-size: 15px; font-weight: 600; letter-spacing: -.012em; white-space: nowrap; }
+  font-size: var(--fs-md); font-weight: 600; letter-spacing: -.012em; white-space: nowrap; }
 nav .brand svg { width: 21px; height: 21px; }
 nav .links { display: flex; gap: 2px; margin-left: auto; flex-wrap: wrap; }
+
+/* The menu button. Desktop shows the links themselves, so this is display: none until
+   the dropdown breakpoint picks it up. It names the page you are on rather than saying
+   "Menu": on a phone the nav is the only thing telling you where you are. */
+.navtoggle {
+  display: none; align-items: center; justify-content: space-between; gap: var(--space-2);
+  margin-left: auto; min-width: 0; min-height: 40px; padding: 0 var(--space-3);
+  border-radius: var(--r-full);
+  background: var(--trough); color: var(--text);
+  font-family: var(--font); font-size: var(--fs-md); font-weight: 550;
+  letter-spacing: -.006em;
+  box-shadow: 0 0 0 .5px var(--glass-stroke) inset, 0 .5px 0 0 var(--edge-top) inset;
+}
+.navtoggle:hover { background: var(--hover-wash); filter: none;
+  box-shadow: 0 0 0 .5px var(--glass-stroke) inset; }
+.navtoggle span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.navtoggle svg { width: 12px; height: 12px; flex: none; color: var(--text-mut);
+  transition: transform var(--dur) var(--ease); }
+.navtoggle[aria-expanded="true"] { background: var(--hover-wash);
+  box-shadow: 0 0 0 1px var(--accent) inset, 0 0 0 4px var(--accent-soft); }
+.navtoggle[aria-expanded="true"] svg { transform: rotate(180deg); }
 
 /* Theme toggle: a small glass capsule holding sun/moon. Switches between light and
    dark explicitly; without a choice the page follows the system. */
 .theme {
+  /* Fixed 40px, unlike the decorative .chip below: this one is a tap target, and a hit
+     area has a floor that does not care how wide the screen is. */
   flex: none; width: 40px; height: 40px; min-height: 0; padding: 0;
   display: grid; place-items: center;
   border-radius: var(--r-full);
@@ -222,8 +250,9 @@ nav .links { display: flex; gap: 2px; margin-left: auto; flex-wrap: wrap; }
 }
 .theme:active svg { transform: rotate(-35deg) scale(.9); }
 nav a {
-  padding: 8px 15px; border-radius: var(--r-full); text-decoration: none;
-  color: var(--text-mut); font-size: 14.5px; font-weight: 500; letter-spacing: -.006em;
+  padding: 8px clamp(.688rem, .5rem + .833vw, .938rem);   /* 11 → 15 */
+  border-radius: var(--r-full); text-decoration: none;
+  color: var(--text-mut); font-size: var(--fs-md); font-weight: 500; letter-spacing: -.006em;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease),
               box-shadow var(--dur) var(--ease);
 }
@@ -252,7 +281,9 @@ section[hidden] { display: none; }
 /* -------------------------------------------------------------------- type */
 /* Optical sizing: the bigger the type, the tighter the tracking. */
 h1 {
-  font-size: clamp(2.9rem, 6vw + 1rem, 5.4rem);
+  /* Starts at 34px on a 320px screen — the old 2.9rem floor filled the column edge to
+     edge with a single word — and runs to 86px without a step anywhere between. */
+  font-size: clamp(2.15rem, 1.1rem + 5.2vw, 5.4rem);
   line-height: 1.015; letter-spacing: -.035em; font-weight: 700;
   margin: 0 0 var(--space-4);
   text-wrap: balance;
@@ -260,12 +291,12 @@ h1 {
 h2 { font-size: clamp(1.65rem, 2vw + .65rem, 2.35rem); line-height: 1.12;
   letter-spacing: -.024em; font-weight: 650; margin: 0 0 var(--space-4);
   text-wrap: balance; }
-h3 { font-size: 18px; letter-spacing: -.014em; font-weight: 600; margin: 0 0 6px; }
+h3 { font-size: var(--fs-lg); letter-spacing: -.014em; font-weight: 600; margin: 0 0 6px; }
 
 /* Eyebrow above a section title — cheap way to give a page real structure. */
 .eyebrow {
   display: block; margin: var(--space-24) 0 var(--space-2);
-  font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+  font-size: var(--fs-xs); font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
   color: var(--accent-ink);
 }
 .eyebrow + h2 { margin-top: 0; }
@@ -274,7 +305,7 @@ h3 { font-size: 18px; letter-spacing: -.014em; font-weight: 600; margin: 0 0 6px
   margin: 0 0 var(--space-8); max-width: 56ch; line-height: 1.45;
   letter-spacing: -.011em; text-wrap: pretty; }
 .muted { color: var(--text-mut); }
-.small { font-size: 14px; line-height: 1.5; }
+.small { font-size: var(--fs-sm); line-height: 1.5; }
 p { text-wrap: pretty; }
 code, .mono { font-family: var(--mono); font-size: .9em;
   padding: 2px 6px; border-radius: 6px; background: var(--hover-wash); }
@@ -288,7 +319,7 @@ code, .mono { font-family: var(--mono); font-size: .9em;
 /* ------------------------------------------------------------------- cards */
 .card { border-radius: var(--r-2xl); padding: var(--space-6); }
 .cards { display: grid; gap: var(--space-4);
-  grid-template-columns: repeat(auto-fit, minmax(228px, 1fr)); }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 228px), 1fr)); }
 /* Four equal tiles in a 2x2 block. The earlier version let the first tile span two
    columns, which pushed the fourth onto a row of its own — an orphan, with mismatched
    heights. Equal tiles, equal rows, aligned baselines. */
@@ -314,26 +345,30 @@ a.card:hover { transform: translateY(-6px); box-shadow:
    left the heading looking like a caption under a badge. */
 .card-head { display: flex; align-items: center; gap: var(--space-3);
   margin-bottom: var(--space-3); }
-.card-head h3 { margin: 0; font-size: 23px; font-weight: 650; letter-spacing: -.02em; }
+.card-head h3 { margin: 0; font-size: var(--fs-xl); font-weight: 650; letter-spacing: -.02em; }
 
 /* Icon chip. The glyph uses --accent-ink, not the brand teal: a teal stroke on a
    teal-lit glass panel sits at nearly the same luminance as its background and simply
    disappears, which is what made this unreadable. */
 .chip {
-  display: grid; place-items: center; width: 40px; height: 40px; flex: none;
-  border-radius: 13px;
+  display: grid; place-items: center; flex: none;
+  width: clamp(2.125rem, 1.83rem + 1.3vw, 2.5rem);        /* 34 → 40 */
+  height: clamp(2.125rem, 1.83rem + 1.3vw, 2.5rem);
+  border-radius: clamp(.688rem, .604rem + .37vw, .812rem);
   background: var(--accent-soft);
   box-shadow: 0 0 0 .5px var(--glass-stroke) inset, 0 .5px 0 0 var(--edge-top) inset;
   color: var(--accent-ink);
 }
-.chip svg { width: 20px; height: 20px; }
+.chip svg { width: 55%; height: 55%; }
 
 /* Centred hero, Apple product-page style. Left-aligned in a 1040px column on a wide
    display left the buttons looking off-centre and the whole page weighted to one side. */
 .hero { padding: var(--space-12) 0 var(--space-16); text-align: center; }
 .hero .lead { margin-inline: auto; }
 .hero .row { margin-top: var(--space-8); justify-content: center; }
-.hero .mark { width: 84px; height: 84px; margin: 0 auto var(--space-6);
+.hero .mark { margin: 0 auto var(--space-6);
+  width: clamp(3.5rem, 2.33rem + 5.19vw, 5.25rem);        /* 56 → 84 */
+  height: clamp(3.5rem, 2.33rem + 5.19vw, 5.25rem);
   filter: drop-shadow(0 10px 30px var(--accent-glow));
   animation: float 7s var(--ease) infinite alternate; }
 @keyframes float {
@@ -411,12 +446,15 @@ button, .btn {
   appearance: none; cursor: pointer;
   position: relative; isolation: isolate;
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
-  padding: 12px 24px; min-height: 46px;
+  /* min-height never drops below 46px: a tap target has a floor that has nothing to do
+     with how wide the screen is. Padding scales, the target does not. */
+  padding: var(--space-3) var(--space-6); min-height: 46px;
   border: 0; border-radius: var(--r-full);
   background:
     linear-gradient(158deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, .04)),
     linear-gradient(158deg, var(--accent), var(--accent-strong));
-  color: #fff; font: 600 15.5px var(--font); letter-spacing: -.008em;
+  color: #fff; font-family: var(--font); font-weight: 600; font-size: var(--fs-md);
+  letter-spacing: -.008em;
   text-decoration: none;      /* .btn is used on <a> too — an underlined pill looks broken */
   box-shadow: 0 .5px 0 0 rgba(255, 255, 255, .6) inset,
               0 0 0 .5px rgba(0, 0, 0, .12) inset,
@@ -442,14 +480,18 @@ button.ghost {
 button.ghost:hover { background: var(--glass-strong); filter: none;
   box-shadow: 0 .5px 0 0 var(--edge-top) inset, 0 0 0 .5px var(--glass-stroke) inset,
               var(--drop-2); }
-button.small { padding: 9px 17px; min-height: 40px; font-size: 14px; }
+button.small { padding: var(--space-2) var(--space-4); min-height: 40px;
+  font-size: var(--fs-sm); }
 
 :is(button, a, input, select):focus-visible { outline: 2px solid var(--accent);
   outline-offset: 3px; }
 .row { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center; }
 
 .seg {
-  display: inline-flex; padding: 4px; gap: 2px;
+  /* Wraps. Four options (Pure/Water/Detergent/Starch) measure 323px, and a card on a
+     320px phone is 224px wide inside its padding — unwrapped, the last option sat
+     outside the page's overflow clip and could not be tapped at all. */
+  display: inline-flex; flex-wrap: wrap; max-width: 100%; padding: 4px; gap: 2px;
   border-radius: var(--r-full);
   background: var(--trough);
   backdrop-filter: blur(14px) saturate(160%);
@@ -458,8 +500,8 @@ button.small { padding: 9px 17px; min-height: 40px; font-size: 14px; }
 }
 .seg button {
   background: none; color: var(--text-mut); box-shadow: none;
-  border-radius: var(--r-full); padding: 8px 17px; min-height: 38px;
-  font-size: 14.5px; font-weight: 500;
+  border-radius: var(--r-full); padding: 8px var(--space-4); min-height: 38px;
+  font-size: var(--fs-md); font-weight: 500;
 }
 .seg button:hover { color: var(--text); background: var(--hover-wash);
   transform: none; filter: none; box-shadow: none; }
@@ -469,12 +511,15 @@ button.small { padding: 9px 17px; min-height: 40px; font-size: 14px; }
               0 3px 10px rgba(0, 0, 0, .26);
 }
 
-label { display: block; font-size: 12px; font-weight: 600; letter-spacing: .08em;
+label { display: block; font-size: var(--fs-xs); font-weight: 600; letter-spacing: .08em;
   text-transform: uppercase; color: var(--text-mut);
   margin: var(--space-6) 0 var(--space-2); }
 input[type="text"], input[type="number"] {
-  width: 100%; padding: 13px 15px; min-height: 46px;
-  font: 16px var(--font); font-variant-numeric: tabular-nums; color: var(--text);
+  width: 100%; padding: var(--space-3) var(--space-4); min-height: 46px;
+  font-family: var(--font); font-variant-numeric: tabular-nums; color: var(--text);
+  /* Hard 16px floor: iOS zooms the viewport when a focused field computes any smaller,
+     and the page never zooms back out. This is the one size that must not scale down. */
+  font-size: max(16px, var(--fs-base));
   background: var(--trough);
   backdrop-filter: blur(14px) saturate(150%);
   -webkit-backdrop-filter: blur(14px) saturate(150%);
@@ -490,33 +535,38 @@ input[type="text"]:focus, input[type="number"]:focus {
 
 /* ------------------------------------------------------------------ readouts */
 .grid { display: grid; gap: var(--space-3);
-  grid-template-columns: repeat(auto-fit, minmax(146px, 1fr)); }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 146px), 1fr)); }
 /* each metric is its own small tile — bento, and it stops long rows of numbers
    collapsing into one grey mass */
 .metric {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--r-md);
   background: var(--trough);
+  container-type: inline-size;
   box-shadow: 0 .5px 0 0 var(--edge-top) inset, 0 0 0 .5px var(--glass-stroke) inset;
 }
-.metric .k { font-size: 11px; font-weight: 600; color: var(--text-mut);
+.metric .k { font-size: var(--fs-xs); font-weight: 600; color: var(--text-mut);
   text-transform: uppercase; letter-spacing: .09em; }
-.metric .v { margin-top: 2px; font-size: 26px; font-weight: 550; letter-spacing: -.024em;
+/* cqi, not vw: a readout tile is as wide as its grid track, which depends on how many
+   tracks fit — the tile is what the number has to fit inside, not the window. */
+.metric .v { margin-top: 2px; font-size: clamp(1.25rem, .55rem + 11cqi, 1.625rem);
+  font-weight: 550; letter-spacing: -.024em;
   font-variant-numeric: tabular-nums; line-height: 1.2; }
-.metric .v small { font-size: 12.5px; font-weight: 500; color: var(--text-mut);
+.metric .v small { font-size: var(--fs-xs); font-weight: 500; color: var(--text-mut);
   letter-spacing: 0; }
 
-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-th, td { padding: 11px 8px; text-align: left; border-bottom: .5px solid var(--line);
-  white-space: nowrap; }
-th { font-size: 11px; font-weight: 600; color: var(--text-mut);
+table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+th, td { padding: var(--space-3) var(--space-2); text-align: left;
+  border-bottom: .5px solid var(--line); white-space: nowrap; }
+th { font-size: var(--fs-xs); font-weight: 600; color: var(--text-mut);
   text-transform: uppercase; letter-spacing: .09em; }
 td { font-variant-numeric: tabular-nums; }
 tr:last-child td { border-bottom: 0; }
 .scroll { overflow-x: auto; }
 
-.pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px;
-  border-radius: var(--r-full); font-size: 12.5px; font-weight: 500;
+.pill { display: inline-flex; align-items: center; gap: 7px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--r-full); font-size: var(--fs-xs); font-weight: 500;
   background: var(--trough); box-shadow: 0 0 0 .5px var(--glass-stroke) inset; }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--adulter);
   box-shadow: 0 0 8px currentColor; transition: background var(--dur) var(--ease); }
@@ -525,7 +575,7 @@ tr:last-child td { border-bottom: 0; }
 .bad { color: var(--adulter); }
 
 .note {
-  border-radius: var(--r-md); padding: var(--space-4); font-size: 14.5px; line-height: 1.5;
+  border-radius: var(--r-md); padding: var(--space-4); font-size: var(--fs-md); line-height: 1.5;
   background: linear-gradient(158deg, rgba(255, 159, 10, .18), rgba(255, 159, 10, .07));
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
@@ -542,14 +592,112 @@ esp-web-install-button { display: block; margin-top: var(--space-4); }
 esp-web-install-button:not(:defined) { display: none; }
 
 footer { padding: var(--space-16) var(--space-6) var(--space-12); text-align: center;
-  color: var(--text-mut); font-size: 12.5px; }
+  color: var(--text-mut); font-size: var(--fs-xs); }
 
-/* Phones: blur is the expensive part, so ease it off and keep scrolling at 60fps. */
+/* ------------------------------------------------------------------ responsive */
+/* Breakpoints follow where the layout actually breaks, not device names:
+     1600px — the 1040px column starts looking marooned in 400px of dead gutter
+      720px — five nav links stop fitting beside the wordmark
+      640px — blur cost starts showing on phone GPUs
+      560px — the wordmark itself is what is squeezing the links
+      400px — card padding plus a 46px headline stop leaving room for words
+   Plus two orthogonal axes that have nothing to do with width: a coarse pointer, and
+   a short landscape viewport. */
+
+/* Below ~720px the five links do not fit beside the wordmark, and the two obvious
+   answers are both wrong: wrapping grew the sticky capsule to 190px on a 320px phone,
+   and a horizontal scroll strip clipped "Flash" to "lash" while relying on a gesture
+   nobody performs on a nav. So the links become a dropdown — the same control the
+   device dashboard already uses for its Wi-Fi mode, so it is one language, not two.
+
+   The markup does not change between the two modes. The same five anchors are the row
+   on a desktop and the menu items on a phone, which is why this still works with the
+   script blocked: an unopened menu is just a nav that has not been reached yet. */
+@media (max-width: 720px) {
+  nav { gap: var(--space-3); }
+  .navtoggle { display: inline-flex; }
+
+  /* display: none rather than the hidden attribute — hidden would follow the menu up to
+     desktop widths, where these links are a plain row again and must always show. */
+  nav .links {
+    display: none;
+    position: absolute; z-index: 30;
+    top: calc(100% + var(--space-2)); left: var(--space-2); right: var(--space-2);
+    flex-direction: column; gap: 2px; margin: 0; padding: 6px;
+    border-radius: var(--r-lg);
+    /* Thick material, not sheer. A sheet floating over the page has to occlude what is
+       under it; at card transparency the headline read straight through the options. */
+    background: var(--menu);
+    backdrop-filter: blur(30px) saturate(170%);
+    -webkit-backdrop-filter: blur(30px) saturate(170%);
+    box-shadow: 0 0 0 .5px var(--glass-stroke) inset, 0 .5px 0 0 var(--edge-top) inset,
+                0 20px 46px rgba(0, 0, 0, .5), 0 4px 12px rgba(0, 0, 0, .3);
+    animation: menuin .18s var(--ease) both; transform-origin: top center;
+  }
+  nav.menuopen .links { display: flex; }
+  /* the sliding pill tracks a horizontal row; in a vertical menu the current item is
+     marked by the dot below instead */
+  nav .links::before { display: none; }
+
+  nav a {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; min-height: 44px; padding: 10px var(--space-4);
+    border-radius: var(--r-sm); font-size: var(--fs-md);
+  }
+  nav a[aria-current="page"] { background: var(--hover-wash); }
+  nav a[aria-current="page"]::after {
+    content: ""; width: 7px; height: 7px; border-radius: 50%; flex: none;
+    background: var(--accent-ink); box-shadow: 0 0 8px var(--accent-ink);
+  }
+  nav .links a + a { box-shadow: 0 -.5px 0 0 var(--menu-line); }
+  nav .links a[aria-current="page"] + a,
+  nav .links a:has(+ a[aria-current="page"]) { box-shadow: none; }
+}
+@keyframes menuin {
+  from { opacity: 0; transform: translateY(-6px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  nav .links { animation: none; }
+  .navtoggle svg { transition: none; }
+}
+
+/* Phones. Not a size adjustment — the fluid scale already handled those — but a
+   capability one: a 26px backdrop blur is what drops a mid-range phone below 60fps
+   while scrolling, and the aurora is decoration, not information. */
 @media (max-width: 640px) {
   :root { --glass-blur: 16px; }
   .aurora { filter: blur(58px) saturate(135%); }
-  nav { gap: var(--space-2); padding: 6px var(--space-2) 6px var(--space-3); }
-  nav .links { gap: 0; }
-  nav a { padding: 7px 11px; font-size: 14px; }
-  .hero { padding-top: var(--space-4); }
+}
+
+/* The wordmark goes only where it genuinely does not fit. It used to be squeezed out at
+   560px because it was competing with five links; against one menu button it survives
+   down to about 400px, and the longest button label — "Calibrate" — is what sets that. */
+@media (max-width: 400px) {
+  nav .btext { display: none; }
+}
+
+/* Landscape phone: 360px of height, and the hero alone wanted 557px of it. Height is
+   the scarce axis here, so the vertical rhythm shrinks and the type does not. */
+@media (max-height: 560px) and (orientation: landscape) {
+  .hero { padding: var(--space-4) 0 var(--space-8); }
+  .hero .mark { width: 54px; height: 54px; margin-bottom: var(--space-3); }
+  h1 { font-size: clamp(2rem, 5vw, 3rem); }
+  .eyebrow { margin-top: var(--space-12); }
+}
+
+/* Touch. :hover latches after a tap, so a tapped card stayed lifted and cocked at an
+   angle until you tapped somewhere else — the pointer affordances read as a rendering
+   bug when there is no pointer. app.js stops feeding the custom properties on the same
+   condition; this covers the states CSS applies on its own. */
+@media (hover: none) {
+  a.card:hover { transform: none; box-shadow: var(--drop-1); }
+  a.card:hover .chip { transform: none; }
+  button:hover, .btn:hover { transform: none; filter: none; }
+  button:hover { box-shadow: 0 .5px 0 0 rgba(255, 255, 255, .6) inset,
+                             0 0 0 .5px rgba(0, 0, 0, .12) inset,
+                             0 6px 18px rgba(0, 0, 0, .28); }
+  .glass:hover::before, .card:hover::before { opacity: .55; }
+  /* a tapped row of buttons should still confirm the tap */
+  button:active, .btn:active { transform: scale(.97); }
 }

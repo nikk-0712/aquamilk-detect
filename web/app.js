@@ -22,6 +22,11 @@ function route() {
   });
   scrollTo({ top: 0 });
   moveNavPill();
+  // The button names the current page, so it has to be relabelled on every route, and
+  // a menu left open over the page you just navigated to is a menu nobody closed.
+  const active = $("nav a[aria-current='page']");
+  if (active) $("#navcurrent").textContent = active.textContent;
+  closeNavMenu();
 }
 addEventListener("hashchange", route);
 route();
@@ -42,7 +47,11 @@ if (!supported()) {
 // ----------------------------------------------------------- micro-interactions
 // CSS cannot read the pointer, so feed it in. Everything below writes custom properties
 // only — no classes, no layout thrash — and it is all skipped under reduced motion.
-const MOTION_OK = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+// A touch screen reports pointermove on every drag, so without the hover test a phone
+// got the full tilt-and-drift treatment and then kept it: :hover latches after a tap,
+// leaving the card cocked at an angle until you tap elsewhere.
+const MOTION_OK = !matchMedia("(prefers-reduced-motion: reduce)").matches
+  && matchMedia("(hover: hover) and (pointer: fine)").matches;
 
 if (MOTION_OK) {
   addEventListener("pointermove", e => {
@@ -96,6 +105,30 @@ $("#theme")?.addEventListener("click", () => {
   const next = current === "light" ? "dark" : "light";
   applyTheme(next);
   try { localStorage.setItem(THEME_KEY, next); } catch {}
+});
+
+// ------------------------------------------------------------------- nav menu
+// Under 720px the links are a dropdown (app.css). Everything here is additive: with the
+// script blocked the button simply never opens, and the links are still in the document
+// for a browser or a screen reader to reach.
+function closeNavMenu() {
+  $("nav")?.classList.remove("menuopen");
+  $("#navtoggle")?.setAttribute("aria-expanded", "false");
+}
+$("#navtoggle")?.addEventListener("click", e => {
+  e.stopPropagation();
+  const open = $("nav").classList.toggle("menuopen");
+  $("#navtoggle").setAttribute("aria-expanded", String(open));
+});
+// Clicking the page, or Escape, closes it — a dropdown that only closes via its own
+// button is the one interaction people reliably get stuck in.
+addEventListener("click", e => {
+  if (!e.target.closest?.("nav")) closeNavMenu();
+});
+addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  closeNavMenu();
+  $("#navtoggle")?.focus();
 });
 
 // The nav pill: one object that slides and resizes between links, instead of four
