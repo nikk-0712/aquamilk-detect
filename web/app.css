@@ -331,6 +331,12 @@ code, .mono { font-family: var(--mono); font-size: .9em;
 .cards.bento > * { display: flex; flex-direction: column; }
 .cards.bento p { margin: 0; }
 
+/* Flash install cards: make each card a column and pin the Install button to the
+   bottom, so Collection's one-line blurb doesn't leave its button riding higher
+   than the two-line Calibration/Deployment cards. */
+#flash .cards > .card { display: flex; flex-direction: column; }
+#flash .cards esp-web-install-button { margin-top: auto; }
+
 a.card { text-decoration: none; color: inherit; display: block;
   transition: transform var(--dur) var(--spring), box-shadow var(--dur) var(--ease); }
 a.card:hover { transform: translateY(-6px); box-shadow:
