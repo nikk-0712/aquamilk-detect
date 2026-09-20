@@ -26,7 +26,7 @@
 #define PIN_TFT_RST  15
 // Backlight: tie to 3V3. GPIO32 is left free if you want PWM dimming later.
 
-// --- Pump via IRF520 module (§4) ---
+// --- Pump via 3.3 V relay module, IN pin on GPIO25 (§4) ---
 #define PIN_PUMP 25
 
 // --- TTP223 capacitive pad. RTC-capable so ext0 deep-sleep wake works (§7) ---

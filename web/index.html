@@ -178,6 +178,13 @@
       </div>
       <label for="chamberMl">Chamber volume (mL) — specific gravity is grams ÷ this</label>
       <div class="row"><input type="number" id="chamberMl" style="max-width:200px"><button class="ghost small" id="saveChamber">Save</button></div>
+      <label>Display orientation — rotates the on-device screen in software (no hardware turning)</label>
+      <div class="row" id="calRotate">
+        <button class="ghost small" data-rotate="0">0°</button>
+        <button class="ghost small" data-rotate="1">90°</button>
+        <button class="ghost small" data-rotate="2">180°</button>
+        <button class="ghost small" data-rotate="3">270°</button>
+      </div>
     </div>
 
     <h2>Stored constants</h2>
@@ -229,6 +236,13 @@
         <button class="ghost" id="colFlush">Flush</button>
         <button class="ghost" id="colTare">Tare</button>
         <span class="small muted" id="colStatus"></span>
+      </div>
+      <div class="row" id="colRotate" style="margin-top:12px">
+        <span class="small muted" style="align-self:center">Rotate screen:</span>
+        <button class="ghost small" data-rotate="0">0°</button>
+        <button class="ghost small" data-rotate="1">90°</button>
+        <button class="ghost small" data-rotate="2">180°</button>
+        <button class="ghost small" data-rotate="3">270°</button>
       </div>
     </div>
 

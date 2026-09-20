@@ -6,7 +6,22 @@
    because this page has to be one self-contained gzipped file in PROGMEM. Dark first:
    glass needs a dark, coloured backdrop to read as glass. */
 :root{--accent:#0FB5C9;--accent-d:#0A8FA3;--accent-ink:#7FF3FF;--green:#34C759;--red:#FF3B30;--amber:#FF9F0A;
---bg:#030406;--text:#F5F5F7;--muted:#A1A1A6;--line:rgba(255,255,255,.1);--r:26px;
+--bg:#030406;--text:#F5F5F7;--muted:#A1A1A6;--line:rgba(255,255,255,.1);
+/* Fluid scale, same idea as web/design/tokens.css: clamp(min, base + slope, max)
+   interpolating between a 360px phone and a 1440px desktop, so nothing steps at a
+   breakpoint. Space and radius shrink on a small screen; type does not shrink below
+   what is readable on a phone. Both ends are rem so browser font settings still win. */
+--r:clamp(1.25rem,1.083rem + .741vw,1.625rem);      /* 20 → 26 card corner */
+--r2:clamp(.75rem,.708rem + .185vw,.875rem);        /* 12 → 14 field corner */
+--s3:clamp(.625rem,.583rem + .185vw,.75rem);        /* 10 → 12 */
+--s4:clamp(.812rem,.75rem + .278vw,1rem);           /* 13 → 16 */
+--s5:clamp(1rem,.917rem + .37vw,1.25rem);           /* 16 → 20 card padding */
+--fs-xs:clamp(.719rem,.708rem + .046vw,.75rem);     /* 11.5 → 12 */
+--fs-sm:clamp(.844rem,.833rem + .046vw,.875rem);    /* 13.5 → 14 */
+--fs-md:clamp(.906rem,.885rem + .093vw,.969rem);    /* 14.5 → 15.5 */
+--fs-base:clamp(1rem,.988rem + .056vw,1.037rem);    /* 16 → 16.6 — a phone is this
+   page's primary client, so the floor is the size body copy needs there, not smaller */
+--fs-lg:clamp(1.125rem,1.042rem + .37vw,1.375rem);  /* 18 → 22 */
 --glass:rgba(255,255,255,.045);--glass-s:rgba(255,255,255,.085);
 --rim-hot:rgba(255,255,255,.92);--rim-warm:rgba(255,255,255,.34);
 --rim-cool:rgba(255,255,255,.10);--rim-dim:rgba(255,255,255,.28);
@@ -21,8 +36,12 @@
 --stroke:rgba(16,20,28,.08);--hi:rgba(255,255,255,.95);--sheen:rgba(255,255,255,.6);
 --edge-t:rgba(255,255,255,.95);--edge-b:rgba(16,20,28,.07);--trough:rgba(255,255,255,.55);--hover:rgba(16,20,28,.05);--accent-soft:rgba(15,181,201,.14);--menu:rgba(250,251,253,.94);--menu-line:rgba(16,20,28,.07);--aop:.3;color-scheme:light}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0 auto;padding:16px;font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
-background:var(--bg);color:var(--text);max-width:640px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{margin:0 auto;padding:var(--s4);
+font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+font-size:var(--fs-base);line-height:1.5;
+background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden;
+/* widens smoothly once the viewport passes ~970px rather than stepping at a breakpoint */
+max-width:min(940px,max(640px,66vw))}
 /* The backdrop the glass refracts. inset:0 + overflow:clip so a blurred blob can never
    push the page sideways. One colour family — brand teal, indigo shadow, pale cyan
    light — rather than a spread of unrelated hues. */
@@ -52,15 +71,15 @@ to{transform:translate3d(6%,-4vh,0) rotate(-7deg) scaleY(1.3)}}
 /* slim translucent scrollbar rather than the default slab */
 html{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;overflow-x:clip}
 @media(prefers-color-scheme:light){html{scrollbar-color:rgba(16,20,28,.22) transparent}}
-h1{font-size:20px;letter-spacing:-.02em;margin:0}
-h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-ink);margin:0 0 10px}
-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+h1{font-size:var(--fs-lg);letter-spacing:-.02em;margin:0}
+h2{font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:.06em;color:var(--accent-ink);margin:0 0 var(--s3)}
+header{display:flex;align-items:center;gap:var(--s3);margin-bottom:var(--s4)}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--red);margin-left:auto;transition:background .3s}
 .dot.on{background:var(--green)}
 /* Glass has thickness: lit hairline on top, shaded one underneath, 0.5px so it stays
    crisp on a phone's 3x display instead of looking like a plastic 1px border. */
 .card{position:relative;isolation:isolate;background:var(--glass);border:0;
-border-radius:var(--r);padding:20px;margin-bottom:14px;
+border-radius:var(--r);padding:var(--s5);margin-bottom:var(--s4);
 backdrop-filter:blur(26px) saturate(140%) brightness(1.08);
 -webkit-backdrop-filter:blur(26px) saturate(140%) brightness(1.08);
 box-shadow:0 8px 24px rgba(0,0,0,.42)}
@@ -80,22 +99,30 @@ var(--rim-cool) 62%,var(--rim-dim) 88%,var(--rim-hot) 100%);
 -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
 -webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
 mask-composite:exclude}
-.verdict{display:flex;align-items:center;gap:18px}
+.verdict{display:flex;align-items:center;gap:clamp(12px,4vw,18px)}
 .vtext{flex:1;min-width:0}
-.vword{font-size:clamp(28px,8vw,38px);font-weight:700;letter-spacing:-.03em;line-height:1.05;transition:color .25s}
-.vsub{color:var(--muted);font-size:14px;margin-top:2px}
+/* overflow-wrap: the longest verdict, "Detergent", measured 130px against a 130px
+   box on a 320px phone — a single font substitution away from spilling out. */
+.vword{font-size:clamp(26px,8vw,38px);font-weight:700;letter-spacing:-.03em;line-height:1.05;
+overflow-wrap:anywhere;transition:color .25s}
+.vsub{color:var(--muted);font-size:var(--fs-sm);margin-top:2px}
 .reveal{animation:pop .32s cubic-bezier(.2,1.3,.4,1)}
 @keyframes pop{from{transform:scale(.94);opacity:.4}to{transform:scale(1);opacity:1}}
-.ring{width:100px;height:100px;flex:none;filter:drop-shadow(0 4px 14px rgba(0,0,0,.4))}
+/* The ring gives up width first: on a narrow phone the verdict word is the thing that
+   has to stay readable, and a 100px dial left it 130px to live in. */
+.ring{width:clamp(74px,24vw,100px);height:clamp(74px,24vw,100px);flex:none;
+filter:drop-shadow(0 4px 14px rgba(0,0,0,.4))}
 .ring circle{fill:none;stroke-width:8;stroke-linecap:round}
 .ring .bg{stroke:var(--trough)}
 .ring .fg{transition:stroke-dashoffset .6s var(--ease),stroke .25s}
 .ring text{font:600 21px -apple-system,system-ui;font-variant-numeric:tabular-nums;
 fill:var(--text);text-anchor:middle}
-.row{display:flex;gap:10px;flex-wrap:wrap}
-button{flex:1;min-width:130px;min-height:48px;border:1px solid var(--stroke);border-radius:980px;color:#fff;
+.row{display:flex;gap:var(--s3);flex-wrap:wrap}
+/* 112px, not 130px: two buttons plus their gap have 248px inside a card on a 320px
+   screen, and at 130px they wrapped onto separate rows for the sake of 8px. */
+button{flex:1;min-width:112px;min-height:48px;border:1px solid var(--stroke);border-radius:980px;color:#fff;
 background:linear-gradient(158deg,rgba(255,255,255,.16),rgba(255,255,255,.06)),linear-gradient(158deg,var(--accent),var(--accent-d));
-font:600 16px -apple-system,system-ui;cursor:pointer;
+font-family:-apple-system,system-ui;font-weight:600;font-size:var(--fs-base);cursor:pointer;
 box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 8px 22px rgba(0,0,0,.35);
 transition:transform .15s var(--ease),box-shadow .3s var(--ease),filter .3s var(--ease),opacity .2s}
 button.sec{background:var(--glass);color:var(--text);
@@ -106,21 +133,27 @@ box-shadow:0 1px 0 rgba(255,255,255,.55) inset,0 12px 28px rgba(15,181,201,.38)}
 button:active{transform:translateY(0) scale(.97)}
 button:disabled{opacity:.38;cursor:default;transform:none;box-shadow:none;filter:grayscale(.4)}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px}
-.k{color:var(--muted);font-size:12px}.v{font-size:17px;font-variant-numeric:tabular-nums}
+/* min(100%, …) so a track's floor can never exceed the card it sits in */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,110px),1fr));gap:var(--s3)}
+.k{color:var(--muted);font-size:var(--fs-xs)}
+.v{font-size:clamp(1.031rem,1.01rem + .093vw,1.094rem);font-variant-numeric:tabular-nums}
 .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:4px}
 .bar i{display:block;height:100%;background:var(--accent-ink);border-radius:3px}
-table{width:100%;border-collapse:collapse;font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:var(--fs-sm)}
 td,th{text-align:left;padding:7px 4px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
-th{color:var(--muted);font-weight:500;font-size:12px}
+th{color:var(--muted);font-weight:500;font-size:var(--fs-xs)}
 /* Form controls in the same material as everything else: recessed glass troughs with
    a hairline, an accent focus ring, and a drawn chevron on the select. Native controls
    render as flat black boxes that belong to no design language at all. */
-label{display:block;font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
-color:var(--muted);margin:16px 0 6px}
+label{display:block;font-size:var(--fs-xs);font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+color:var(--muted);margin:var(--s4) 0 6px}
 input[type=text],input[type=password],input[type=number],select{
-width:100%;padding:13px 15px;min-height:46px;font:15px -apple-system,BlinkMacSystemFont,system-ui;
-color:var(--text);background:var(--trough);border:0;border-radius:14px;
+width:100%;padding:var(--s3) var(--s4);min-height:46px;
+font-family:-apple-system,BlinkMacSystemFont,system-ui;
+/* 16px floor: iOS zooms the viewport when a focused field computes any smaller, and it
+   does not zoom back out afterwards. The one size here that must not scale down. */
+font-size:max(16px,var(--fs-md));
+color:var(--text);background:var(--trough);border:0;border-radius:var(--r2);
 -webkit-appearance:none;appearance:none;
 backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);
 box-shadow:0 0 0 .5px var(--stroke) inset,0 .5px 0 0 var(--edge-t) inset;
@@ -144,8 +177,9 @@ background-repeat:no-repeat;background-position:right 15px center}
    painted under the next card. Lift the whole card instead. */
 .card.menuopen{z-index:60}
 .selbtn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
-padding:13px 15px;min-height:46px;min-width:0;border:0;border-radius:14px;
-font:15px -apple-system,BlinkMacSystemFont,system-ui;color:var(--text);text-align:left;
+padding:var(--s3) var(--s4);min-height:46px;min-width:0;border:0;border-radius:var(--r2);
+font-family:-apple-system,BlinkMacSystemFont,system-ui;font-size:max(16px,var(--fs-md));
+color:var(--text);text-align:left;
 background:var(--trough);
 backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);
 box-shadow:0 0 0 .5px var(--stroke) inset,0 .5px 0 0 var(--edge-t) inset;
@@ -167,7 +201,7 @@ box-shadow:0 0 0 .5px var(--stroke) inset,0 .5px 0 0 var(--edge-t) inset,
 animation:selin .18s var(--ease) both;transform-origin:top center}
 .sellist li+li{box-shadow:0 -.5px 0 0 var(--menu-line)}
 @keyframes selin{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}
-.sellist li{padding:11px 13px;border-radius:12px;font-size:15px;cursor:pointer;
+.sellist li{padding:11px 13px;border-radius:var(--r2);font-size:max(16px,var(--fs-md));cursor:pointer;
 display:flex;align-items:center;justify-content:space-between;gap:8px;
 transition:background .18s var(--ease)}
 .sellist li:hover,.sellist li.on{background:var(--hover)}
@@ -189,17 +223,31 @@ input[type=range]::-moz-range-track{height:6px;border-radius:999px;background:va
 input[type=range]::-moz-range-progress{height:6px;border-radius:999px;background:var(--accent)}
 input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radius:50%;
 background:linear-gradient(158deg,#fff,#d8ecf5);box-shadow:0 2px 10px rgba(0,0,0,.55)}
-details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px;list-style:none}
+details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:var(--fs-sm);list-style:none}
 details summary::-webkit-details-marker{display:none}
 .warn{background:rgba(255,159,10,.14);border:1px solid var(--amber);
-border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:14px}
-.tabs{display:flex;gap:2px;background:rgba(255,255,255,.06);padding:4px;border-radius:980px;margin-bottom:14px;
+border-radius:var(--r2);padding:var(--s3);font-size:var(--fs-sm);margin-bottom:var(--s4)}
+.tabs{display:flex;gap:2px;background:rgba(255,255,255,.06);padding:4px;border-radius:980px;margin-bottom:var(--s4);
 border:1px solid var(--stroke);backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%)}
-.tabs button{background:none;color:var(--muted);min-height:38px;min-width:0;font-size:14px;
+.tabs button{background:none;color:var(--muted);min-height:38px;min-width:0;font-size:var(--fs-sm);
 border:0;border-radius:980px;box-shadow:none}
 .tabs button:hover{color:var(--text);background:rgba(255,255,255,.08);transform:none;filter:none;box-shadow:none}
 .tabs button[aria-selected=true]{color:var(--text);background:var(--glass-s);
 box-shadow:0 1px 0 var(--hi) inset,0 4px 14px rgba(0,0,0,.32)}
+/* Wide screens. This page is built for the phone that joins the device's own Wi-Fi,
+   but it answers on a laptop too, where a 640px ribbon down the middle leaves the
+   tables cramped and the rest of the display empty. */
+@media(min-width:900px){
+#live,#set{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4);align-items:start}
+#live>.card,#set>.card{margin-bottom:0}}
+/* Touch: :hover latches after a tap, so a tapped button stayed raised and a listbox
+   row stayed highlighted until something else was touched. */
+@media(hover:none){
+button:hover{transform:none;filter:none;
+box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 8px 22px rgba(0,0,0,.35)}
+button.sec:hover{box-shadow:0 1px 0 var(--hi) inset,0 8px 20px rgba(0,0,0,.35)}
+.selbtn:hover{background:var(--trough)}
+.sellist li:hover{background:none}.sellist li.on{background:var(--hover)}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head><body>
 

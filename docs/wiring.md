@@ -17,7 +17,7 @@ flowchart TB
     OW["GPIO4 OneWire"]
     HX["GPIO16/17"]
     SPI["GPIO18/23 + 5/2/15"]
-    PWM["GPIO25 PWM"]
+    PWM["GPIO25 digital"]
     TCH["GPIO27 RTC"]
   end
 
@@ -28,7 +28,7 @@ flowchart TB
   DS["DS18B20<br/>4.7 kΩ to 3V3"] --- OW
   LC["HX711 + 3 kg cell"] --- HX
   TFT["ST7735 128×160"] --- SPI
-  PWM --> Q["2N2222 level shifter"] --> M["IRF520 module"] --> P["6 V pump"]
+  PWM --> M["3.3 V relay module"] --> P["6 V pump"]
   PAD["TTP223 pad"] --> TCH
 
   classDef in fill:#0FB5C9,color:#fff,stroke:none;
@@ -70,34 +70,30 @@ GPIO36/39/34 are **input-only** pins. That is fine here and is why they were cho
 
 ### Pump
 
-```
-                    +5V
-                     │
-                    10kΩ
-                     │
-GPIO25 ──1kΩ──[B] 2N2222 [C]──── IRF520 SIG
-                  [E]
-                   │
-                  GND
+The 6 V pump is switched by a **3.3 V relay module**, driven straight from the ESP32:
 
-IRF520 VIN/GND ── 6 V rail / GND
-IRF520 V+/V-   ── pump, with 1N4007 across it (band → +6 V)
+```
+GPIO25 ──── relay IN
+3V3    ──── relay VCC
+GND    ──── relay GND
+
+relay COM / NO ──── in series with the pump's +6 V feed
 ```
 
-Why the extra transistor: the IRF520's gate threshold is specified for ~10 V drive. At
-3.3 V it operates in the linear region — the pump runs weakly, the FET heats, and
-behaviour changes as it warms. The 2N2222 pulls the gate to ~5 V, which is enough for
-usable flow.
+The module has its own driver transistor and flyback diode on board, so GPIO25 sources
+almost no current and **no 2N2222 level-shifter is needed** — that is the whole point of
+using a relay here instead of the bare IRF520.
 
-The consequence is inverted logic: **GPIO HIGH = pump OFF**. The firmware knows this via
-`PUMP_ACTIVE_LOW` (default `true`) in
-[`sensors.h`](../libs/AquaMilkSensors/src/sensors.h). Symptom check: if the pump runs
-continuously at idle and stops when you press *Flush test*, your wiring is non-inverting —
-set the flag `false` and rebuild.
+This module is **active-HIGH**: driving IN high energizes the coil, so **GPIO HIGH = pump
+ON**. The firmware knows this via `PUMP_ACTIVE_LOW` (default `false`) in
+[`sensors.h`](../libs/AquaMilkSensors/src/sensors.h). Drive it as a plain digital output —
+**never PWM a relay**, or the coil chatters. Symptom check: if the pump runs continuously
+at idle and stops when you press *Flush test*, your module is active-LOW — set the flag
+`true` and rebuild.
 
-The 1N4007 is not optional. A DC motor without a flyback path puts an inductive spike
-across the MOSFET every time it switches off, and that spike eventually kills either the
-MOSFET or the ESP32 sitting on the same ground.
+A relay's contacts switch the inductive motor cleanly, but a **1N4007 flyback diode across
+the pump** (band → +6 V) is still cheap insurance against contact arcing; keep it if you
+have one fitted.
 
 ## Power
 

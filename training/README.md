@@ -6,6 +6,8 @@ plus an evaluation report you can defend in a viva.
 ## Run it
 
 ```bash
+python -m venv .venv
+.venv/Scripts/activate  # macOS/Linux: source .venv/bin/activate
 python -m pip install -r training/requirements.txt
 ```
 

@@ -68,7 +68,7 @@ ESP32 DevKit V1 (38-pin, ESP32-WROOM-32), Arduino core — not ESP-IDF.
 | Temperature | DS18B20 waterproof | OneWire |
 | Density | HX711 + 3 kg load cell | 2-wire |
 | Display | 1.8" ST7735 TFT, 128×160 | SPI |
-| Pump | 6 V peristaltic dosing pump | via IRF520 module |
+| Pump | 6 V peristaltic dosing pump | via 3.3 V relay module |
 | Input | 1 × TTP223 capacitive pad | GPIO (RTC pin) |
 | Power | 12 V 1.5 A adapter + LM2596 buck ×2 | — |
 
@@ -87,7 +87,7 @@ Defined once in [`libs/AquaMilkSensors/src/pins.h`](libs/AquaMilkSensors/src/pin
 | TFT SCLK / MOSI | **18 / 23** | VSPI |
 | TFT CS / DC / RST | **5 / 2 / 15** | strapping pins, fine as outputs |
 | TFT backlight | 3V3 | (GPIO32 left free for PWM dimming) |
-| Pump gate (IRF520 SIG) | **25** | LEDC PWM |
+| Pump (relay IN) | **25** | Digital output, active-HIGH |
 | TTP223 OUT | **27** | RTC-capable → deep-sleep touch wake |
 
 Free for later: 13, 14, 26, 32, 33, 35 (35 input-only). Avoid GPIO12 (boot strapping).
@@ -102,19 +102,21 @@ the Calibrate page — because everything downstream reports millivolts *at the 
 All three analog channels are on **ADC1** deliberately: ADC2 does not work while Wi-Fi is
 on, and stage 3 needs Wi-Fi.
 
-**2 · The IRF520 is not a logic-level MOSFET.** Its gate wants ~10 V; at the ESP32's
-3.3 V it barely conducts — weak flow, hot FET, unreliable. Drive it through a 2N2222:
+**2 · The pump is switched by a 3.3 V relay module.** It is driven straight from GPIO25 —
+the module's onboard transistor and flyback do the work, so no 2N2222 level-shifter is
+needed:
 
 ```
-GPIO25 ──1kΩ──┤ base    2N2222     collector ──┬── IRF520 SIG
-              │ emitter ── GND                 └── 10kΩ ── +5V
+GPIO25 → relay IN      pump +6 V feed → relay COM/NO
+3V3    → relay VCC
+GND    → relay GND
 ```
 
-That transistor **inverts** the signal, so GPIO HIGH = pump OFF. Hence
-`PUMP_ACTIVE_LOW` defaults to `true` in
-[`sensors.h`](libs/AquaMilkSensors/src/sensors.h). Swapping in a logic-level MOSFET
-(IRLZ44N) driven directly? Set that flag `false` and rebuild. And always fit the
-**1N4007 flyback diode across the pump**, band to +6 V.
+This module is **active-HIGH** (GPIO HIGH = pump ON), so `PUMP_ACTIVE_LOW` defaults to
+`false` in [`sensors.h`](libs/AquaMilkSensors/src/sensors.h). Got an active-LOW board (pump
+runs at idle)? Set that flag `true` and rebuild. **Never PWM a relay** — drive it as a
+plain digital output. A **1N4007 across the pump** (band → +6 V) is optional insurance
+against contact arcing.
 
 ### Power
 
@@ -123,10 +125,12 @@ flowchart LR
   ADP["12 V 1.5 A adapter"] --> B1["LM2596 → 6 V"] --> PUMP["6 V pump<br/>1N4007 across it"]
   ADP --> B2["LM2596 → 5 V"] --> ESP["ESP32 5V pin"]
   ESP --> R3["3V3 rail"] --> SENSORS["TFT · TCS34725 · DS18B20 · HX711 · TTP223"]
-  ESP -.->|"GPIO25 → 2N2222 → IRF520"| PUMP
+  ESP -.->|"GPIO25 → 3.3 V relay"| PUMP
 ```
 
 Full connection-by-connection list and the power budget: [docs/wiring.md](docs/wiring.md).
+Enclosure and test-chamber dimensions: [docs/enclosure.md](docs/enclosure.md), printable
+model in [hardware/enclosure.scad](hardware/enclosure.scad).
 
 ---
 
@@ -169,6 +173,8 @@ constants stage 1 stored, and the model is only as good as the calibration under
 ### Train
 
 ```bash
+python -m venv .venv
+.venv/Scripts/activate  # macOS/Linux: source .venv/bin/activate
 python -m pip install -r training/requirements.txt
 ```
 
@@ -186,8 +192,11 @@ Want to see the pipeline run before you own any data? `python training/train.py 
 ### Run the finished device
 
 Power it. It brings up its own Wi-Fi — **AquaMilk-XXXX**, password shown on the TFT — and
-serves the dashboard at **http://192.168.4.1**. Point it at your own network in Settings
-and it also answers at `http://aquamilk.local`. No phone needed for a test, though:
+serves the dashboard at **http://192.168.4.1**. It runs a **captive portal**, so the moment
+your phone joins the network the "Sign in to Wi-Fi" browser pops open on the dashboard
+automatically — no need to type the address. (If your phone shows it in the cut-down captive
+window, tap "open in browser" for the full live view.) Point it at your own network in
+Settings and it also answers at `http://aquamilk.local`. No phone needed for a test, though:
 
 | Gesture on the pad | Action |
 |---|---|

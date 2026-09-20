@@ -14,12 +14,17 @@
 #include "features.h"
 
 // ---------------------------------------------------------------- pump wiring
-// PROJECT_CONTEXT.md §4: the IRF520 module is not logic-level, so the documented
-// wiring drives its gate through a 2N2222 (GPIO25 -> 1k -> base, collector -> SIG
-// with 10k pull-up to +5V). That transistor INVERTS the signal: GPIO HIGH = pump OFF.
-// Set this false only if you swap in a logic-level MOSFET (e.g. IRLZ44N) driven directly.
+// PROJECT_CONTEXT.md §4: this build switches the 6 V pump with a 3.3 V relay
+// MODULE. GPIO25 -> the module's IN pin; the board's own driver transistor and
+// flyback drive the coil, so the GPIO sources ~no current and no level shifter
+// is needed. A relay is a mechanical switch, so it is driven as a plain digital
+// output (never PWM -- a relay coil chatters under PWM).
+//
+// PUMP_ACTIVE_LOW selects the module's polarity. THIS board is ACTIVE-HIGH
+// (GPIO HIGH energizes the relay -> pump ON), so the default is false. Set it
+// true for the common opto-isolated relay boards that energize on LOW.
 #ifndef PUMP_ACTIVE_LOW
-#define PUMP_ACTIVE_LOW true
+#define PUMP_ACTIVE_LOW false
 #endif
 
 // ------------------------------------------------------------------- readings

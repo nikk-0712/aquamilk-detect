@@ -378,16 +378,18 @@ AveragedSample avgFinish() {
 
 // ----------------------------------------------------------------------- pump
 static inline void pumpWrite(bool on) {
-  // LEDC on GPIO25 (§4). Full-on/full-off duty: PWM exists so a future build can
-  // dial the flow rate down without touching call sites.
+  // 3.3 V relay module on GPIO25 (§4). A relay is a mechanical switch, so drive
+  // it as a plain digital level -- never PWM, which would make the coil chatter.
+  // PUMP_ACTIVE_LOW handles boards whose IN pin energizes on LOW; this build is
+  // active-HIGH (see sensors.h).
   bool level = PUMP_ACTIVE_LOW ? !on : on;
-  ledcWrite(PIN_PUMP, level ? 255 : 0);
+  digitalWrite(PIN_PUMP, level ? HIGH : LOW);
 }
 
 void pumpBegin() {
-  ledcAttach(PIN_PUMP, 1000, 8);      // 1 kHz, 8-bit — arduino-esp32 3.x API
+  pinMode(PIN_PUMP, OUTPUT);
   pump_on = false;
-  pumpWrite(false);
+  pumpWrite(false);                   // relay de-energized (pump off) at boot
 }
 
 void pumpStart(uint32_t ms) {

@@ -115,8 +115,11 @@ static void handleLine(char* line) {
     } else if (!strcmp(key, "flush_ms")) {
       cal.flush_ms = constrain((int)(in["val"] | 5000), 0, 60000);
       calSave(); sendAck("set", true, "flush_ms set");
+    } else if (!strcmp(key, "rotation")) {
+      dispSetRotation((uint8_t)constrain((int)(in["val"] | 0), 0, 3));
+      sendAck("set", true, "rotation set");
     } else {
-      sendAck("set", false, "unknown key (use avg_ms / flush_ms)");
+      sendAck("set", false, "unknown key (use avg_ms / flush_ms / rotation)");
     }
   }
   else if (!strcmp(cmd, "reset_counter")) {

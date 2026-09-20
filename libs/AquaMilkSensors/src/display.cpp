@@ -1,19 +1,58 @@
 // display.cpp — see display.h.
 #include "display.h"
 #include "pins.h"
+#include <Preferences.h>
 
 static Adafruit_ST7735 tft(PIN_TFT_CS, PIN_TFT_DC, PIN_TFT_RST);
 
 #define HEADER_H 18          // aqua title strip; body text starts below it
 
+static uint8_t s_rot = AMD_TFT_ROTATION;
+
+// Apply the panel's fine offset then the rotation. Order matters: setRotation()
+// derives the address-window start from the col/row start, so the nudge is set
+// first. setColRowStart(0,0) is a no-op, so this is safe when no nudge is needed.
+static void applyRotation() {
+#if (AMD_TFT_COLSTART != 0) || (AMD_TFT_ROWSTART != 0)
+  tft.setColRowStart(AMD_TFT_COLSTART, AMD_TFT_ROWSTART);   // only pulled in when nudged
+#endif
+  tft.setRotation(s_rot & 3);
+}
+
+static void rotLoad() {
+  Preferences p;
+  p.begin("amd_cal", true);
+  s_rot = p.getUChar("tft_rot", AMD_TFT_ROTATION) & 3;
+  p.end();
+}
+
+static void rotSave() {
+  Preferences p;
+  p.begin("amd_cal", false);
+  p.putUChar("tft_rot", s_rot & 3);
+  p.end();
+}
+
 void dispBegin(const char* title) {
-  tft.initR(INITR_BLACKTAB);          // 1.8" 128x160 black-tab panel
-  tft.setRotation(0);                 // portrait 128 x 160
+  rotLoad();
+  tft.initR(AMD_TFT_INITR);           // panel variant (fixes edge-offset glitch)
+  applyRotation();
   tft.fillScreen(AMD_BG);
   tft.setTextWrap(false);
   dispTitle(title);
 }
 
+void dispSetRotation(uint8_t r) {
+  s_rot = r & 3;
+  rotSave();
+  applyRotation();
+  tft.fillScreen(AMD_BG);             // orientation changed; caller repaints
+}
+
+uint8_t dispRotation() { return s_rot; }
+
+// Header: title in aqua with a crisp 2px accent rule under it, so it reads as
+// intentional app chrome rather than a floating line.
 void dispTitle(const char* title) {
   tft.fillRect(0, 0, tft.width(), HEADER_H, AMD_BG);
   tft.setTextColor(AMD_ACCENT);
@@ -21,6 +60,7 @@ void dispTitle(const char* title) {
   tft.setCursor(4, 5);
   tft.print(title);
   tft.drawFastHLine(0, HEADER_H - 2, tft.width(), AMD_ACCENT);
+  tft.drawFastHLine(0, HEADER_H - 1, tft.width(), AMD_ACCENT);
 }
 
 void dispLines(const char* const* lines, uint8_t n) {
@@ -36,24 +76,37 @@ void dispLines(const char* const* lines, uint8_t n) {
 }
 
 void dispBig(const char* word, uint16_t color, const char* sub) {
+  const int16_t top = HEADER_H + 2;
+  const int16_t h   = tft.height() - top - 3;
   tft.fillRect(0, HEADER_H, tft.width(), tft.height() - HEADER_H, AMD_BG);
-  // Verdict panel, tinted in the result colour so the whole screen reads at a glance.
-  tft.drawRoundRect(3, HEADER_H + 2, tft.width() - 6, tft.height() - HEADER_H - 5, 7, color);
+  // Verdict panel, outlined in the result colour so the whole screen reads at a glance.
+  tft.drawRoundRect(3, top, tft.width() - 6, h, 7, color);
+
+  const bool have_sub = sub && *sub;
+  // Vertically centre the word (+ sub) as a block, so it fills whatever the
+  // current rotation gives us instead of sitting at a fixed portrait offset.
+  const int16_t wordH = 16;                     // size-2 glyph height
+  const int16_t subGap = have_sub ? 10 : 0;
+  const int16_t subH   = have_sub ? 8  : 0;
+  const int16_t blockH = wordH + subGap + subH;
+  int16_t y = top + (h - blockH) / 2;
+  if (y < top + 4) y = top + 4;
+
   tft.setTextSize(2);
   tft.setTextColor(color);
-  // centre the word: size-2 glyphs are 12 px wide
-  int16_t w = (int16_t)strlen(word) * 12;
+  int16_t w = (int16_t)strlen(word) * 12;       // size-2 glyphs are 12 px wide
   int16_t x = (tft.width() - w) / 2;
   if (x < 2) x = 2;
-  tft.setCursor(x, 60);
+  tft.setCursor(x, y);
   tft.print(word);
-  if (sub && *sub) {
+
+  if (have_sub) {
     tft.setTextSize(1);
     tft.setTextColor(AMD_MUTED);
     int16_t sw = (int16_t)strlen(sub) * 6;
     int16_t sx = (tft.width() - sw) / 2;
     if (sx < 2) sx = 2;
-    tft.setCursor(sx, 90);
+    tft.setCursor(sx, y + wordH + subGap);
     tft.print(sub);
   }
 }

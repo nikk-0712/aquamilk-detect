@@ -31,7 +31,7 @@
     {"cmd":"factory_reset"}                              wipe NVS
     {"cmd":"set","key":"<k>","val":<v>}  keys:
         ph_mode ("raw"|"cal"), oversample, div_ph, div_tds, div_turb,
-        avg_ms, flush_ms, chamber_ml, conf_thr
+        avg_ms, flush_ms, chamber_ml, conf_thr, rotation (0..3)
 
   Libraries (pinned in .github/workflows/build-firmware.yml):
     ArduinoJson 7.4.3, Adafruit TCS34725 1.4.4, Adafruit GFX 1.12.6,
@@ -74,6 +74,7 @@ static void sendCal() {
   d["avg_ms"]     = cal.avg_ms;
   d["flush_ms"]   = cal.flush_ms;
   d["chamber_ml"] = cal.chamber_ml;
+  d["rotation"]   = dispRotation();
   d["conf_thr"]   = cal.conf_threshold;
   serializeJson(d, Serial);
   Serial.println();
@@ -101,6 +102,7 @@ static void doSet(JsonDocument& in) {
   else if (!strcmp(key, "flush_ms"))   cal.flush_ms = constrain((int)(val | 5000), 0, 60000);
   else if (!strcmp(key, "chamber_ml")) cal.chamber_ml = val | 100.0f;
   else if (!strcmp(key, "conf_thr"))   cal.conf_threshold = constrain((float)(val | 0.60f), 0.0f, 0.99f);
+  else if (!strcmp(key, "rotation"))   dispSetRotation((uint8_t)constrain((int)(val | 0), 0, 3));
   else { snprintf(msg, sizeof msg, "unknown key %s", key); sendAck("set", false, msg); return; }
 
   calSave();

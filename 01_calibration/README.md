@@ -72,11 +72,11 @@ Do these in order, with the web app's Calibrate page open.
    mode. **No buffers? Leave raw mode on** — the model trains on raw millivolts either
    way (see `features.h`), so skipping this costs you the human-readable pH number,
    not accuracy.
-7. **Flush test.** Hit *Flush test*. If the pump does nothing, re-read §4 of
-   `PROJECT_CONTEXT.md`: the IRF520 is not logic-level, and the documented 2N2222
-   level-shifter **inverts** the signal, which is why `PUMP_ACTIVE_LOW` defaults to
-   `true` in `sensors.h`. If the pump instead runs constantly and stops when you
-   command a flush, your wiring is non-inverting — flip that flag and rebuild.
+7. **Flush test.** Hit *Flush test*. The pump is switched by a **3.3 V relay module**
+   on GPIO25. This build's module is **active-HIGH**, so `PUMP_ACTIVE_LOW` defaults to
+   `false` in `sensors.h`. If the pump instead runs constantly at idle and stops when
+   you command a flush, your module is active-LOW — set that flag `true` and rebuild.
+   Never PWM a relay; see §4 of `PROJECT_CONTEXT.md`.
 
 Constants are written to NVS (namespace `amd_cal`) the moment each step succeeds, so
 you can power-cycle mid-way through without losing work.

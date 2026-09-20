@@ -252,6 +252,8 @@ $("#saveChamber").onclick = () =>
   calLink.send({ cmd: "set", key: "chamber_ml", val: Number($("#chamberMl").value) || 100 });
 $("#selftest").onclick = () => { $("#selftestOut").textContent = "running…"; calLink.send({ cmd: "selftest" }); };
 $("#calFlush").onclick = () => calLink.send({ cmd: "flush" });
+$$("#calRotate [data-rotate]").forEach(b => b.onclick = () =>
+  calLink.send({ cmd: "set", key: "rotation", val: Number(b.dataset.rotate) }));
 $("#factory").onclick = () => {
   if (confirm("Erase every calibration constant on the device?")) calLink.send({ cmd: "factory_reset" });
 };
@@ -340,6 +342,8 @@ function renderRows() {
 $("#capture").onclick = () => { if (!busy) colLink.send({ cmd: "capture" }); };
 $("#colFlush").onclick = () => colLink.send({ cmd: "flush" });
 $("#colTare").onclick = () => colLink.send({ cmd: "tare" });
+$$("#colRotate [data-rotate]").forEach(b => b.onclick = () =>
+  colLink.send({ cmd: "set", key: "rotation", val: Number(b.dataset.rotate) }));
 $("#undoRow").onclick = () => { rows.pop(); renderRows(); };
 $("#clearRows").onclick = () => { if (confirm("Discard every row in this session?")) { rows.length = 0; renderRows(); } };
 

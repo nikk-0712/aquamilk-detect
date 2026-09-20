@@ -44,6 +44,7 @@
 
 #include <WiFi.h>
 #include <ESPmDNS.h>
+#include <DNSServer.h>
 #include <LittleFS.h>
 #include <Preferences.h>
 #include <ArduinoJson.h>
@@ -67,6 +68,8 @@ enum AppState { IDLE, TESTING, FLUSHING, MENU };
 static AppState  app = IDLE;
 static AsyncWebServer server(80);
 static AsyncWebSocket ws("/ws");
+static DNSServer  dnsServer;             // captive portal: all lookups -> AP IP
+static bool       captive = false;       // true only in SoftAP mode
 static Preferences net_prefs;
 
 static Verdict  last_v;
@@ -80,7 +83,7 @@ static uint32_t t_push = 0, t_tft = 0;
 
 // menu
 static const char* MENU_ITEMS[] = { "Wi-Fi info", "Tare", "Re-check cal",
-                                    "Settings", "Gestures", "Exit" };
+                                    "Settings", "Rotate", "Gestures", "Exit" };
 static const uint8_t MENU_N = sizeof(MENU_ITEMS) / sizeof(MENU_ITEMS[0]);
 static uint8_t menu_i = 0;
 static char    menu_note[40] = "";
@@ -312,6 +315,9 @@ static void onDoubleTap() {
                cal.conf_threshold, (unsigned)(cal.flush_ms / 1000));
     } else if (!strcmp(item, "Wi-Fi info")) {
       snprintf(menu_note, sizeof menu_note, "%s", ip_str.c_str());
+    } else if (!strcmp(item, "Rotate")) {
+      dispSetRotation((dispRotation() + 1) & 3);       // cycle 0->1->2->3, persisted
+      snprintf(menu_note, sizeof menu_note, "rotation %u", dispRotation());
     } else if (!strcmp(item, "Gestures")) {
       snprintf(menu_note, sizeof menu_note, "tap dbl hold tap-tap-hold");
     } else if (!strcmp(item, "Exit")) {
@@ -374,6 +380,12 @@ static void netStart() {
   WiFi.mode(WIFI_AP);
   WiFi.softAP(ap_ssid.c_str(), ap_pass.c_str());
   ip_str = WiFi.softAPIP().toString();
+
+  // Captive portal: answer every DNS query with our own IP, so the phone's
+  // connectivity check is redirected here and the OS auto-pops the dashboard.
+  dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+  dnsServer.start(53, "*", WiFi.softAPIP());
+  captive = true;
 }
 
 // -------------------------------------------------------------------- HTTP API
@@ -487,7 +499,12 @@ static void routes() {
     ESP.restart();
   });
 
-  server.onNotFound([](AsyncWebServerRequest* q) { q->send(404, "text/plain", "not found"); });
+  server.onNotFound([](AsyncWebServerRequest* q) {
+    // In AP mode, bounce the OS connectivity probe (and any stray URL) to the
+    // dashboard — that is what makes the "Sign in to Wi-Fi" browser pop open.
+    if (captive) q->redirect(String("http://") + ip_str + "/");
+    else         q->send(404, "text/plain", "not found");
+  });
 }
 
 static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* c, AwsEventType type,
@@ -531,6 +548,7 @@ void setup() {
 }
 
 void loop() {
+  if (captive) dnsServer.processNextRequest();   // service captive-portal DNS
   sensorsUpdate();
   touchUpdate();
   ws.cleanupClients();
