@@ -31,8 +31,8 @@
 // (160x128). The live value is stored in NVS ("amd_cal"/"tft_rot") and set at
 // runtime with dispSetRotation() — no need to physically turn the panel.
 #ifndef AMD_TFT_ROTATION
-#define AMD_TFT_ROTATION 0
-#endif
+#define AMD_TFT_ROTATION 1   // this build's panel is mounted a quarter-turn; 1 puts the
+#endif                       // header at the top. (Flip to 3 if it comes out upside-down.)
 
 // Aqua Milk Detect palette (§9) in RGB565.
 #define AMD_BG      0x0000   // near-black, matches the dark theme background
