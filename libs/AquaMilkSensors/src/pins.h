@@ -30,7 +30,7 @@
 // --- Pump via 3.3 V relay module, IN pin on GPIO25 (§4) ---
 #define PIN_PUMP 25
 
-// --- TTP223 capacitive pad. RTC-capable so ext0 deep-sleep wake works (§7) ---
-#define PIN_TOUCH 27
+// (TTP223 touch pad removed — the device is controlled entirely from the browser.
+//  GPIO27 is now free.)
 
-// Free for future use: 13, 14, 26, 32, 33, 35 (35 input-only). Avoid GPIO12 (strapping/boot).
+// Free for future use: 26, 27, 32, 33, 35 (35 input-only). Avoid GPIO12 (strapping/boot).

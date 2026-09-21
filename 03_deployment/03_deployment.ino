@@ -49,7 +49,6 @@
 #include <Preferences.h>
 #include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
-#include <esp_sleep.h>
 
 #include <sensors.h>
 #include <serialio.h>
@@ -64,7 +63,7 @@
 #define LOG_KEEP  200          // rolling log length (§11)
 
 // ------------------------------------------------------------------ app state
-enum AppState { IDLE, TESTING, FLUSHING, MENU };
+enum AppState { IDLE, TESTING, FLUSHING };
 static AppState  app = IDLE;
 static AsyncWebServer server(80);
 static AsyncWebSocket ws("/ws");
@@ -80,13 +79,6 @@ static char     reason[64] = "";
 static String   ap_ssid, ap_pass, sta_ssid, sta_pass, ip_str;
 static bool     sta_mode = false;
 static uint32_t t_push = 0, t_tft = 0;
-
-// menu
-static const char* MENU_ITEMS[] = { "Wi-Fi info", "Tare", "Re-check cal",
-                                    "Settings", "Rotate", "Gestures", "Exit" };
-static const uint8_t MENU_N = sizeof(MENU_ITEMS) / sizeof(MENU_ITEMS[0]);
-static uint8_t menu_i = 0;
-static char    menu_note[40] = "";
 
 // ------------------------------------------------------------------- log (fs)
 static void logAppend(const Verdict& v, const Reading& r) {
@@ -176,7 +168,7 @@ static void tftIdle() {
                          "ready"
 #endif
                        };
-  dispKV("Tap to test", keys, vals, sizeof(keys) / sizeof(keys[0]));
+  dispKV("Control from dashboard", keys, vals, sizeof(keys) / sizeof(keys[0]));
 }
 
 static void tftVerdict() {
@@ -196,20 +188,6 @@ static void tftVerdict() {
   t.setTextColor(AMD_MUTED);
   t.setCursor(4, 134);
   t.print(reason);
-}
-
-static void tftMenu() {
-  const char* lines[MENU_N + 3];
-  static char rows[MENU_N][26];
-  uint8_t n = 0;
-  lines[n++] = "Menu  tap=next";
-  lines[n++] = "dbl=pick hold=exit";
-  for (uint8_t i = 0; i < MENU_N; i++) {
-    snprintf(rows[i], sizeof rows[i], "%s%s", i == menu_i ? "> " : "  ", MENU_ITEMS[i]);
-    lines[n++] = rows[i];
-  }
-  lines[n++] = menu_note;
-  dispLines(lines, n);
 }
 
 // ------------------------------------------------------------------ test flow
@@ -245,108 +223,10 @@ static void finishTest() {
   pushStatus();
 }
 
-// ------------------------------------------------------------------- gestures
-// One TTP223 on GPIO27, active high. Timing windows are deliberately generous.
-#define LONG_MS 1500
-#define GAP_MS   500
-static bool     t_down = false;
-static uint32_t t_edge = 0, t_last_release = 0;
-static uint8_t  tap_run = 0;          // consecutive short taps
-static bool     long_fired = false;
-
-static void onTap();
-static void onDoubleTap();
-static void onLongPress();
-static void onSoftPower();
-
-static void touchUpdate() {
-  bool now_down = digitalRead(PIN_TOUCH) == HIGH;
-  uint32_t now = millis();
-
-  if (now_down != t_down) {
-    if (now - t_edge < 30) return;                        // debounce
-    t_down = now_down;
-    t_edge = now;
-    if (now_down) {
-      long_fired = false;
-      if (now - t_last_release > GAP_MS) tap_run = 0;     // stale run
-    } else if (!long_fired) {
-      tap_run++;                                         // a short tap landed
-      t_last_release = now;
-    } else {
-      tap_run = 0;                                       // release after a long press
-    }
-    return;
-  }
-
-  if (t_down && !long_fired && now - t_edge >= LONG_MS) {
-    long_fired = true;
-    if (tap_run >= 2) { tap_run = 0; onSoftPower(); }     // tap, tap, hold
-    else              { tap_run = 0; onLongPress(); }
-    return;
-  }
-
-  if (!t_down && tap_run > 0 && now - t_last_release >= GAP_MS) {
-    uint8_t n = tap_run;
-    tap_run = 0;
-    if (n == 1) onTap();
-    else        onDoubleTap();
-  }
-}
-
-static void onTap() {
-  if (app == MENU) { menu_i = (menu_i + 1) % MENU_N; menu_note[0] = 0; tftMenu(); return; }
-  if (app == IDLE) startTest();
-}
-
-static void onDoubleTap() {
-  if (app == MENU) {
-    const char* item = MENU_ITEMS[menu_i];
-    if (!strcmp(item, "Tare")) {
-      calTare();
-      snprintf(menu_note, sizeof menu_note, "chamber zeroed");
-    } else if (!strcmp(item, "Re-check cal")) {
-      Reading r;
-      char why[80];
-      bool ok = sensorsSelftest(r, why, sizeof why);
-      snprintf(menu_note, sizeof menu_note, "%s", ok ? "all sensors ok" : why);
-    } else if (!strcmp(item, "Settings")) {
-      snprintf(menu_note, sizeof menu_note, "thr %.2f flush %us",
-               cal.conf_threshold, (unsigned)(cal.flush_ms / 1000));
-    } else if (!strcmp(item, "Wi-Fi info")) {
-      snprintf(menu_note, sizeof menu_note, "%s", ip_str.c_str());
-    } else if (!strcmp(item, "Rotate")) {
-      dispSetRotation((dispRotation() + 1) & 3);       // cycle 0->1->2->3, persisted
-      snprintf(menu_note, sizeof menu_note, "rotation %u", dispRotation());
-    } else if (!strcmp(item, "Gestures")) {
-      snprintf(menu_note, sizeof menu_note, "tap dbl hold tap-tap-hold");
-    } else if (!strcmp(item, "Exit")) {
-      app = IDLE;
-      tftIdle();
-      return;
-    }
-    tftMenu();
-    return;
-  }
-  if (app == IDLE) { pumpStart(cal.flush_ms); app = FLUSHING; pushStatus(); }
-}
-
-static void onLongPress() {
-  if (app == MENU) { app = IDLE; tftIdle(); return; }
-  if (app == IDLE) { app = MENU; menu_i = 0; menu_note[0] = 0; tftMenu(); }
-}
-
-static void onSoftPower() {
-  dispBig("Sleeping", AMD_MUTED, "touch to wake");
-  ws.closeAll();
-  pumpStop();
-  delay(600);
-  WiFi.disconnect(true);
-  WiFi.mode(WIFI_OFF);
-  dispTft().enableDisplay(false);
-  esp_sleep_enable_ext0_wakeup((gpio_num_t)PIN_TOUCH, 1);   // wake on touch (§7)
-  esp_deep_sleep_start();
-}
+// Control is entirely via the Wi-Fi dashboard now (no TTP223 touch pad). A test is
+// started by POST /api/test -> startTest(); flush/tare/selftest/settings/wifi/
+// factory_reset each have their own endpoint (see routes()). Deep sleep was removed
+// with the touch pad, since nothing was left to wake the device.
 
 // ---------------------------------------------------------------------- Wi-Fi
 static void netLoad() {
@@ -529,7 +409,6 @@ void setup() {
   Serial.println("# WARNING: placeholder model — every test reports Uncertain until you train.");
 #endif
 
-  pinMode(PIN_TOUCH, INPUT);
   dispBegin("Aqua Milk Detect");
   sensorsBegin();
 
@@ -550,7 +429,6 @@ void setup() {
 void loop() {
   if (captive) dnsServer.processNextRequest();   // service captive-portal DNS
   sensorsUpdate();
-  touchUpdate();
   ws.cleanupClients();
 
   if (app == TESTING && !avgBusy()) finishTest();
