@@ -75,8 +75,8 @@ Use these exact pins in all firmwares.
 | TFT SCLK | **18** | VSPI |
 | TFT MOSI | **23** | VSPI |
 | TFT CS | **5** | strapping pin — fine as output |
-| TFT DC | **13** | moved off GPIO2 — a strapping pin on it blocks USB flashing |
-| TFT RST | **14** | moved off GPIO15 — a strapping pin on it blocks USB flashing |
+| TFT DC | **2** | strapping pin — pull the DevKit from its socket to flash, then reseat |
+| TFT RST | **15** | strapping pin — pull the DevKit from its socket to flash, then reseat |
 | TFT BL (backlight) | tie to 3V3 (or **32** for dim) | |
 | Pump (relay IN) | **25** | Plain digital output (active-HIGH) |
 | TTP223 OUT | **27** | RTC-capable → deep-sleep touch wake (ext0) |

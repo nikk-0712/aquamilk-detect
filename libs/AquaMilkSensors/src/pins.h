@@ -22,8 +22,9 @@
 #define PIN_TFT_SCLK 18
 #define PIN_TFT_MOSI 23
 #define PIN_TFT_CS    5
-#define PIN_TFT_DC   13   // moved off GPIO2 — GPIO2 is a boot-strapping pin and the
-#define PIN_TFT_RST  14   // TFT on it (and RST on GPIO15) blocks USB flashing at reset
+#define PIN_TFT_DC    2   // NOTE: GPIO2 and GPIO15 are boot-strapping pins. With the TFT
+#define PIN_TFT_RST  15   // soldered here, pull the DevKit from its socket to flash, then
+                          // reseat. (These match the physical wiring on this build.)
 // Backlight: tie to 3V3. GPIO32 is left free if you want PWM dimming later.
 
 // --- Pump via 3.3 V relay module, IN pin on GPIO25 (§4) ---
@@ -32,5 +33,4 @@
 // --- TTP223 capacitive pad. RTC-capable so ext0 deep-sleep wake works (§7) ---
 #define PIN_TOUCH 27
 
-// Free for future use: 26, 32, 33, 35 (35 input-only). Avoid GPIO12 (strapping/boot),
-// and GPIO2/GPIO15 — keep those clear of anything driven at reset or USB flashing breaks.
+// Free for future use: 13, 14, 26, 32, 33, 35 (35 input-only). Avoid GPIO12 (strapping/boot).
