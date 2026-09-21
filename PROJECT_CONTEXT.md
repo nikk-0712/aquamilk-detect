@@ -45,10 +45,10 @@ The system is delivered as **three separate Arduino firmwares** plus **one web a
 | Flyback | 1N4007 diode (optional) | across pump | Cheap insurance against contact arcing |
 | Power step-down | LM2596 buck | — | 12 V → 6 V (pump) and 5 V/3.3 V (logic) |
 | Power source | 12 V 1.5 A adapter (user owns) | — | 18 W, ample |
-| Input | **1 × TTP223 capacitive touch pad** (user owns) | GPIO (RTC pin) | Gesture-driven; **NO LEDs** |
+| Control | **Browser dashboard** over Wi-Fi | — | No touch pad, no LEDs |
 | Fluidics | Silicone tube 1 m + user's reservoir & waste cup | — | Flush plumbing |
 
-**User-owned / not purchased:** ESP32, 3.3 V relay module, 12 V 1.5 A adapter, 1N4007 diode (optional), TTP223 pad(s), jumper wires, breadboard.
+**User-owned / not purchased:** ESP32, 3.3 V relay module, 12 V 1.5 A adapter, 1N4007 diode (optional), jumper wires, breadboard.
 **User to source separately:** enclosure + test chamber, distilled water, (optional, cheap) pH 4/7 buffer sachets.
 
 **Purchase split (both free-shipping > ₹999, ₹0 shipping):**
@@ -79,7 +79,7 @@ Use these exact pins in all firmwares.
 | TFT RST | **15** | strapping pin — pull the DevKit from its socket to flash, then reseat |
 | TFT BL (backlight) | tie to 3V3 (or **32** for dim) | |
 | Pump (relay IN) | **25** | Plain digital output (active-HIGH) |
-| TTP223 OUT | **27** | RTC-capable → deep-sleep touch wake (ext0) |
+| (GPIO27 free) | — | TTP223 removed — device controlled from the browser |
 
 **ADC rules (critical):**
 - All three analog sensors are on **ADC1** because **ADC2 is unusable while Wi-Fi is on**.
@@ -132,18 +132,11 @@ density_g, color_r, color_g, color_b, color_clear
 
 ---
 
-## 7. Interaction — single TTP223 gestures (deployment)
+## 7. Interaction — browser dashboard (deployment)
 
-**No LEDs.** All feedback is on the **TFT** and the **web dashboard**. One touch pad, gesture vocabulary (keep timing generous; show a gesture cheat-sheet in the menu):
+**No touch pad, no LEDs.** All control and feedback is on the **TFT** (status + verdict) and the **web dashboard** served over Wi-Fi. Dashboard controls: **Run test**, **Flush**, **Tare**, **Re-check calibration**, **Settings** (threshold / flush ms / avg ms), **Wi-Fi**, and **Factory reset**.
 
-| Gesture | Action |
-|---|---|
-| **Single tap** | Start a test |
-| **Double tap** | Flush now |
-| **Long-press (~1.5 s)** | Open on-screen menu → navigate with taps (Wi-Fi info · Tare · Re-check calibration · Settings) |
-| **Tap-tap-hold** | **Soft power**: enter deep sleep (screen/Wi-Fi off, µA). A touch **wakes** it (ext0 on GPIO27). No true hardware off (a touch pad can't power a dead board); a physical switch on the adapter gives hard-off if desired. |
-
-Test flow: sample in → single tap → TFT shows "Reading…" (average ~3 s) → verdict + confidence → **auto-flush ~5 s** → ready. Uncertain → amber "Uncertain — retest", auto-suggest flush + retry.
+Test flow: sample in → **Run test** on the dashboard → TFT shows "Reading…" (average ~3 s) → verdict + confidence → **auto-flush ~5 s** → ready. Uncertain → amber "Uncertain — retest".
 
 ---
 

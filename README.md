@@ -69,7 +69,7 @@ ESP32 DevKit V1 (38-pin, ESP32-WROOM-32), Arduino core — not ESP-IDF.
 | Density | HX711 + 3 kg load cell | 2-wire |
 | Display | 1.8" ST7735 TFT, 128×160 | SPI |
 | Pump | 6 V peristaltic dosing pump | via 3.3 V relay module |
-| Input | 1 × TTP223 capacitive pad | GPIO (RTC pin) |
+| Control | Browser dashboard (Wi-Fi) | — |
 | Power | 12 V 1.5 A adapter + LM2596 buck ×2 | — |
 
 ### Pin map (final — used by all three firmwares)
@@ -88,7 +88,7 @@ Defined once in [`libs/AquaMilkSensors/src/pins.h`](libs/AquaMilkSensors/src/pin
 | TFT CS / DC / RST | **5 / 2 / 15** | DC/RST on strapping pins — pull the DevKit to flash, then reseat |
 | TFT backlight | 3V3 | (GPIO32 left free for PWM dimming) |
 | Pump (relay IN) | **25** | Digital output, active-HIGH |
-| TTP223 OUT | **27** | RTC-capable → deep-sleep touch wake |
+| (GPIO27 free) | — | TTP223 touch pad removed — browser-controlled |
 
 Free for later: 13, 14, 26, 32, 33, 35 (35 input-only). Avoid GPIO12 (boot strapping).
 
@@ -124,7 +124,7 @@ against contact arcing.
 flowchart LR
   ADP["12 V 1.5 A adapter"] --> B1["LM2596 → 6 V"] --> PUMP["6 V pump<br/>1N4007 across it"]
   ADP --> B2["LM2596 → 5 V"] --> ESP["ESP32 5V pin"]
-  ESP --> R3["3V3 rail"] --> SENSORS["TFT · TCS34725 · DS18B20 · HX711 · TTP223"]
+  ESP --> R3["3V3 rail"] --> SENSORS["TFT · TCS34725 · DS18B20 · HX711"]
   ESP -.->|"GPIO25 → 3.3 V relay"| PUMP
 ```
 
@@ -196,14 +196,11 @@ serves the dashboard at **http://192.168.4.1**. It runs a **captive portal**, so
 your phone joins the network the "Sign in to Wi-Fi" browser pops open on the dashboard
 automatically — no need to type the address. (If your phone shows it in the cut-down captive
 window, tap "open in browser" for the full live view.) Point it at your own network in
-Settings and it also answers at `http://aquamilk.local`. No phone needed for a test, though:
+Settings and it also answers at `http://aquamilk.local`.
 
-| Gesture on the pad | Action |
-|---|---|
-| Single tap | Run a test |
-| Double tap | Flush now |
-| Long press ~1.5 s | On-screen menu (tap = next, double tap = select, long press = exit) |
-| Tap, tap, hold | Sleep. A touch wakes it |
+Everything is controlled from the dashboard — **Run test**, **Flush**, **Tare**,
+**Re-check calibration**, **Settings**, **Wi-Fi**, and **Factory reset**. The TTP223
+touch pad and its gestures were removed, so there is no on-device menu or sleep.
 
 A test averages ~3 s, shows the class with a confidence ring, gives the binary
 pure-vs-adulterated headline plus the two sensors that drove the decision, logs the
