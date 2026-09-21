@@ -63,7 +63,7 @@ GPIO36/39/34 are **input-only** pins. That is fine here and is why they were cho
 | HX711 DT / SCK | GPIO16 / GPIO17 | 3V3 or 5 V both work; 3V3 is quieter |
 | Load cell → HX711 | E+ E- A+ A- | Colour order per your cell's datasheet |
 | TFT SCLK / MOSI | GPIO18 / GPIO23 | VSPI |
-| TFT CS / DC / RST | GPIO5 / GPIO2 / GPIO15 | Strapping pins, safe as outputs |
+| TFT CS / DC / RST | GPIO5 / GPIO13 / GPIO14 | DC/RST off GPIO2/15 (those strapping pins block USB flashing) |
 | TFT LED / BL | 3V3 | Move to GPIO32 if you want PWM dimming |
 | TTP223 OUT | GPIO27 | Active high. RTC-capable, so ext0 deep-sleep wake works |
 | TTP223 VCC / GND | 3V3 / GND | |

@@ -85,7 +85,7 @@ Defined once in [`libs/AquaMilkSensors/src/pins.h`](libs/AquaMilkSensors/src/pin
 | DS18B20 data | **4** | 4.7 kΩ pull-up to 3V3 |
 | HX711 DOUT / SCK | **16 / 17** | |
 | TFT SCLK / MOSI | **18 / 23** | VSPI |
-| TFT CS / DC / RST | **5 / 2 / 15** | strapping pins, fine as outputs |
+| TFT CS / DC / RST | **5 / 13 / 14** | DC/RST moved off GPIO2/15 so USB flashing works |
 | TFT backlight | 3V3 | (GPIO32 left free for PWM dimming) |
 | Pump (relay IN) | **25** | Digital output, active-HIGH |
 | TTP223 OUT | **27** | RTC-capable → deep-sleep touch wake |
