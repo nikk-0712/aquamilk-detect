@@ -25,17 +25,15 @@ import numpy as np
 import pandas as pd
 
 # ---------------------------------------------------------------------- contracts
-FEATURES = ["ph", "tds", "turbidity", "density", "temperature",
+FEATURES = ["ph", "tds", "turbidity", "temperature",
             "color_r", "color_g", "color_b", "color_clear"]
 LABEL = "adulterant"
 CLASSES = ["detergent", "pure", "starch", "water"]        # sklearn sorts labels
+# density_g is accepted if present (old CSVs) but is no longer a feature — the load
+# cell was removed from the build.
 RAW_COLUMNS = ["timestamp_iso", "milk_type", "adulterant", "level_pct", "source",
-               "temp_c", "ph_raw_mv", "tds_raw_mv", "turbidity_raw_mv", "density_g",
+               "temp_c", "ph_raw_mv", "tds_raw_mv", "turbidity_raw_mv",
                "color_r", "color_g", "color_b", "color_clear"]
-
-# Must match sensors.cpp::specificGravity()
-WATER_RHO_20C = 0.998203
-THERMAL_EXPANSION = 2.1e-4
 
 
 # ------------------------------------------------------------------------- loading
@@ -77,23 +75,17 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # ------------------------------------------------------------------------ features
-def raw_to_features(df: pd.DataFrame, chamber_ml: float = 100.0) -> pd.DataFrame:
+def raw_to_features(df: pd.DataFrame) -> pd.DataFrame:
     """Turn raw CSV columns into the model's feature matrix, in FEATURES order.
 
-    Only one transform happens here: grams in a fixed-volume chamber become a
-    temperature-corrected specific gravity, exactly as sensors.cpp does it on device.
-    Everything else is fed as the raw millivolts / raw colour counts the CSV holds,
-    which is why firmware and trainer cannot disagree (see features.h).
-
-    chamber_ml MUST be the same value the device has stored (Calibrate page shows it).
+    No transforms: every feature is fed as the raw millivolts / raw colour counts /
+    temperature the CSV holds, which is why firmware and trainer cannot disagree
+    (see features.h). (The density/load-cell feature was removed.)
     """
-    rho = df.density_g / chamber_ml
-    rho20 = rho * (1.0 + THERMAL_EXPANSION * (df.temp_c - 20.0))
     out = pd.DataFrame({
         "ph": df.ph_raw_mv,
         "tds": df.tds_raw_mv,
         "turbidity": df.turbidity_raw_mv,
-        "density": rho20 / WATER_RHO_20C,
         "temperature": df.temp_c,
         "color_r": df.color_r,
         "color_g": df.color_g,
@@ -352,15 +344,15 @@ def synthetic_frame(n_per_class: int = 12, seed: int = 7) -> pd.DataFrame:
     them says something about this generator and nothing about milk.
     """
     rng = np.random.default_rng(seed)
-    # per class: pH mV, TDS mV, turbidity mV, grams in a 100 mL chamber, R, G, B, clear
+    # per class: pH mV, TDS mV, turbidity mV, R, G, B, clear
     centres = {
-        "pure":      (1580, 640, 1180, 103.2, 900, 880, 790, 2600),
-        "water":     (1610, 480, 1500, 101.4, 780, 770, 700, 2950),
-        "detergent": (1350, 900, 1260, 102.6, 860, 850, 800, 2700),
-        "starch":    (1560, 690,  920, 103.6, 940, 900, 780, 2200),
+        "pure":      (1580, 640, 1180, 900, 880, 790, 2600),
+        "water":     (1610, 480, 1500, 780, 770, 700, 2950),
+        "detergent": (1350, 900, 1260, 860, 850, 800, 2700),
+        "starch":    (1560, 690,  920, 940, 900, 780, 2200),
     }
     rows = []
-    for cls, (ph, tds, turb, g, r, gr, b, c) in centres.items():
+    for cls, (ph, tds, turb, r, gr, b, c) in centres.items():
         for i in range(n_per_class):
             def jit(v, s):
                 return float(v * (1 + rng.normal(0, s)))
@@ -375,7 +367,6 @@ def synthetic_frame(n_per_class: int = 12, seed: int = 7) -> pd.DataFrame:
                 "ph_raw_mv": round(jit(ph, 0.012), 1),
                 "tds_raw_mv": round(jit(tds, 0.02), 1),
                 "turbidity_raw_mv": round(jit(turb, 0.018), 1),
-                "density_g": round(jit(g, 0.0035), 2),
                 "color_r": int(jit(r, 0.03)),
                 "color_g": int(jit(gr, 0.03)),
                 "color_b": int(jit(b, 0.03)),
@@ -394,13 +385,6 @@ if __name__ == "__main__":
     df = clean(synthetic_frame(20))
     X = raw_to_features(df)
     assert list(X.columns) == FEATURES, "feature order drifted from features.h"
-
-    # specific gravity must match the firmware formula for a known case
-    probe = pd.DataFrame({"density_g": [100.0], "temp_c": [20.0], "ph_raw_mv": [1.0],
-                          "tds_raw_mv": [1.0], "turbidity_raw_mv": [1.0], "color_r": [1],
-                          "color_g": [1], "color_b": [1], "color_clear": [1]})
-    sg = raw_to_features(probe).density.iloc[0]
-    assert abs(sg - 1.0 / WATER_RHO_20C) < 1e-6, f"specific gravity maths changed: {sg}"
 
     scaler = StandardScaler().fit(X)
     Xs = scaler.transform(X)

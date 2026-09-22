@@ -2,7 +2,7 @@
 """train.py — Aqua Milk Detect SVM trainer.
 
     python train.py                          # trains on data/*.csv
-    python train.py --data "data/*.csv" --chamber-ml 100 --seed 42
+    python train.py --data "data/*.csv" --seed 42
     python train.py --synthetic               # runs on generated data, for a smoke test
 
 Outputs (into training/):
@@ -47,8 +47,6 @@ def parse_args():
                                formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--data", default="data/*.csv", help="glob for the collected CSVs")
     p.add_argument("--synthetic", action="store_true", help="use generated data instead of files")
-    p.add_argument("--chamber-ml", type=float, default=100.0,
-                   help="chamber volume the DEVICE has stored (Calibrate page shows it)")
     p.add_argument("--test-size", type=float, default=0.25, help="held-out fraction")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--min-per-class", type=int, default=10)
@@ -58,6 +56,10 @@ def parse_args():
 
 def main() -> int:
     a = parse_args()
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # Windows cp1252 chokes on → ± etc.
+    except Exception:
+        pass
     REPORT.mkdir(exist_ok=True)
     lines: list[str] = []                 # collected into report/report.txt
 
@@ -83,11 +85,9 @@ def main() -> int:
         say("  Collect at least ~10 samples per class (30+ is better) and run again.")
         return 2
 
-    X = utils.raw_to_features(df, a.chamber_ml)
+    X = utils.raw_to_features(df)
     y = df[utils.LABEL].to_numpy()
     say(f"\nfeatures ({len(utils.FEATURES)}): {', '.join(utils.FEATURES)}")
-    say(f"chamber volume used for specific gravity: {a.chamber_ml} mL "
-        "(must match the device's stored value)")
 
     strat = y if counts.min() >= 2 else None
     X_tr, X_te, y_tr, y_te = train_test_split(
@@ -225,8 +225,8 @@ def main() -> int:
     if not a.no_export:
         utils.export_scaler_h(HERE / "scaler.h", scaler.mean_, scaler.scale_, recommended)
         utils.export_model_h(HERE / "model.h", clf, Xs_tr)
-        joblib.dump({"scaler": scaler, "clf": clf, "features": utils.FEATURES,
-                     "chamber_ml": a.chamber_ml}, HERE / "pipeline.joblib")
+        joblib.dump({"scaler": scaler, "clf": clf, "features": utils.FEATURES},
+                    HERE / "pipeline.joblib")
 
     utils.save_json(REPORT / "metrics.json", {
         "rows": int(len(df)),
@@ -242,7 +242,6 @@ def main() -> int:
         "permutation_importance": importance,
         "support_vectors": int(len(clf.support_vectors_)),
         "synthetic": bool(a.synthetic),
-        "chamber_ml": a.chamber_ml,
         "seed": a.seed,
     })
 
@@ -256,8 +255,8 @@ def main() -> int:
         "in scope if you only collected 5 % and up.")
     say("* Starch is the hardest class: it changes turbidity the way fat does. Expect its "
         "recall to lag the others.")
-    say("* Drift: probes age, the chamber films over. Re-run selftest and re-calibrate "
-        "periodically, and re-collect if verdicts start disagreeing with reality.")
+    say("* Drift: probes age and film over. Re-run selftest and re-calibrate periodically, "
+        "and re-collect if verdicts start disagreeing with reality.")
     if a.synthetic:
         say("* THIS RUN USED SYNTHETIC DATA. It proves the pipeline works, nothing else.")
     for w in warnings:
