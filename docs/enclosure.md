@@ -1,9 +1,5 @@
 # Enclosure
 
-> **Note:** the load cell and its density feature were removed from the electronics. The
-> cup now just rests on the platform (a passive shelf); the weighing, tare and
-> specific-gravity passages below are historical and no longer apply.
-
 The enclosure is not a box to hide the wiring in. Two of the features the model uses —
 colour and turbidity — are really *mechanical* measurements, and the enclosure is what
 makes them repeatable. Get the light shrouding wrong and no amount of retraining fixes it.
@@ -68,8 +64,8 @@ milk in its corners, while a 0.4 mm recess just holds a shadow line and wipes cl
   ┌───┴───────┴───┐  220   top plate · DISTILLED WATER neck · G2 shoulder
   │   cup 85 mL   │  178   cup rim
   │───────────────│  121   drawer plate — pull, dump, push back
-  │  load cell    │
-  │───────────────│   75   drop-in shelf, the load-cell datum
+  │  cup platform │
+  │───────────────│   75   drop-in shelf carries the platform
   │ tank · pump   │        486 mL tank against the rear wall
   │ boards · USB  │
   └───────────────┘    0   undercut base, 6 mm tall, stepped in 3 mm
@@ -104,19 +100,18 @@ fill level only matters for keeping the probes submerged.)
 ## 4. How you use it
 
 1. Pour the sample into the **MILK** dish on the cap. It runs down a duct into the cup.
-2. Single tap.
+2. Run a test from the dashboard.
 3. After the verdict: lift the column, pull the drawer, tip the cup out, push it back. The
    pump then rinses the probes with distilled water.
 
-Pushing the drawer home walks the cup up a 1.5 mm chamfer onto the load-cell platform, so at
-rest it touches nothing but the cell, with 4 mm of clearance all round.
+Pushing the drawer home walks the cup up a 1.5 mm chamfer onto the fixed platform, so at
+rest it sits on the platform with 4 mm of clearance all round.
 
 ### Why the column has to move
 
 The probes hang *into* the cup, so the cup cannot slide out horizontally past them —
 something has to separate vertically first. Making the column its own piston is the smallest
-mechanism that does it: one sliding part, no linkage, and it is mechanically isolated from the
-load cell, so if it ever binds it cannot put a gram into the reading.
+mechanism that does it: one sliding part, no linkage.
 
 The cap is keyed by three magnets on a deliberately **asymmetric** triangle. Three magnets at
 120° would let it seat three ways, and only one of those puts the pour duct over the fill slot.
@@ -155,15 +150,12 @@ solution.
 
 ## 6. The rules that actually matter
 
-1. The cup touches **only** the platform when seated. The drawer's ⌀78 hole clears the ⌀70
-   platform by 4 mm all round; anything bridging that gap — a wire, a drip of dried milk — is
-   read as grams and therefore as density.
-2. The load cell is bolted, not clipped. Four M4 bolts through the shelf into a printed-in
-   pedestal, nuts trapped underneath. A snap-fit anywhere on the measurement path is
-   compliance, and compliance reads as tare drift. Every one of those bolts is internal.
-3. Print the shelf at 6 perimeters and 60 % infill. It is the datum.
-4. Four rubber feet, level bench, re-tare after moving. A bar cell is tilt-sensitive.
-5. The colour sensor stays dry, behind a glued acrylic window in the side wall, looking at the
+1. The cup seats on the platform when the drawer closes. The drawer's ⌀78 hole clears the ⌀70
+   platform by 4 mm all round — keep that gap clear of wires and dried-milk drips so the cup
+   walks on cleanly.
+2. The platform is bolted to the shelf pedestal, not clipped — two M4 bolts, heads internal.
+   Print the shelf at 6 perimeters and 60 % infill so the cup sits on a rigid, flat rest.
+3. The colour sensor stays dry, behind a glued acrylic window in the side wall, looking at the
    cup through a hood. Paint the interior matt black — ambient light landing on it rides
    straight into four of the model's features and changes with the time of day.
 
@@ -181,8 +173,8 @@ is the price of a clean rear face.
 
 ## 8. Materials
 
-Matte PETG. Not PLA — it creeps under a bolted load cell and does not survive repeated
-cleaning. Print visible faces at 0.10–0.12 mm: a squircle only reads as a squircle when the
+Matte PETG. Not PLA — it does not survive repeated cleaning and warm rinse water.
+Print visible faces at 0.10–0.12 mm: a squircle only reads as a squircle when the
 layer lines disappear into the curve.
 
 The cup and the tank hold liquid — 5 perimeters each, and run a silicone bead on the tank's
@@ -197,11 +189,11 @@ small acrylic offcut for the colour window, four M4 bolts and nuts, silicone tub
 
 1. Print and dry-fit the body, shelf and drawer. Check the drawer runs freely and the cup
    walks onto the platform as it closes.
-2. Mount the load cell, riser and platform. Tare, then press on the body in a few places — the
-   reading should return to zero. If it drifts, the shelf is not seated on its ledge.
+2. Bolt the platform onto the shelf pedestal, and check the shelf is seated on its ledge so
+   the cup walks on squarely as the drawer closes.
 3. Base: tank and lid sealed and leak-tested with water **before** anything electrical goes
    near them. Then pump, converters, PD trigger.
-4. Boards on the shelf, display and touch pad behind the fascia, USB-C aligned to its cutout.
+4. Boards on the shelf, display behind the fascia, USB-C aligned to its cutout.
    Confirm stage-1 firmware boots before adding sensors one at a time, per
    [wiring.md](wiring.md).
 5. Probes into the column carrier, cables down through the cable exit, with a service loop
