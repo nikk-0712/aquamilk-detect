@@ -1,9 +1,5 @@
 # Enclosure — bench instrument
 
-> **Note:** the load cell and its density feature were removed from the electronics. The
-> cup now just rests on the platform (a passive shelf); the weighing, tare and density
-> passages below are historical and no longer apply.
-
 Model: [`hardware/enclosure-lab.scad`](../hardware/enclosure-lab.scad). This is a separate
 file and a separate design; it does not replace `hardware/enclosure.scad`.
 
@@ -54,11 +50,10 @@ machine, and it is a mechanical one.
 3. **Stand the cup** in the pocket and fill it with your sample. Fill past the weir hole in
    the cup wall — the excess runs out, and that overflow is what makes the volume
    repeatable. `MAX 175 mL` is engraved on the drawer beside the pocket.
-4. **Push** the drawer in. The cup rides up a 2 mm chamfer onto the platform and settles
-   there, touching the load cell and nothing else. That isolation is the entire reason the
-   density reading works.
+4. **Push** the drawer in. The cup rides up a 2 mm chamfer onto the fixed platform and settles
+   there.
 5. **Lower** the carriage. The probes enter the sample to a fixed depth.
-6. **Tap** the pad. Read the verdict.
+6. **Run a test** from the dashboard. Read the verdict.
 7. **Lift, pull, take the cup out, empty and rinse it by hand.**
 8. **Push the empty drawer back in, lower the carriage, run the rinse.** Water from the tank
    runs over the probes and falls through the drawer's drain into the WASTE tray.
@@ -100,7 +95,7 @@ needs supports.
 | `head` | **upside down**, so the facet prints as a receding wall |
 | `carriage` | as rendered |
 | `sample_drawer`, `waste_tray` | as rendered, open side up |
-| `platform`, `riser` | flat. 6 perimeters, 60 % infill — these carry the weighing |
+| `platform` | flat. 6 perimeters, 60 % infill — a flat, rigid rest for the cup |
 | `tank_cap` | flat |
 
 ```bash
@@ -112,7 +107,7 @@ milk in its corners, while a recess just holds a shadow line and wipes clean. Ca
 5.5 mm, the smallest a 0.4 mm nozzle holds cleanly.
 
 Not printed: the cup (acrylic tube, ⌀70 ID × 105, with a ⌀6 weir hole drilled 45.5 mm above
-the inside of its floor), the load cell, the dark facet panel, the colour window, magnets,
+the inside of its floor), the dark facet panel, the colour window, magnets,
 silicone tube, fasteners.
 
 ---
