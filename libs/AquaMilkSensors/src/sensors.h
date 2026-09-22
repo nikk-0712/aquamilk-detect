@@ -35,19 +35,18 @@ struct Reading {
   float    ph_mv         = NAN;
   float    tds_mv        = NAN;
   float    turb_mv       = NAN;
-  float    density_g     = NAN;   // grams in the chamber, tare-corrected
   uint16_t r = 0, g = 0, b = 0, c = 0;
   uint32_t ts_ms         = 0;
   // liveness flags, refreshed by sensorsUpdate()
-  bool ok_temp = false, ok_color = false, ok_scale = false;
+  bool ok_temp = false, ok_color = false;
 };
 
 // Per-channel mean + standard deviation from a trimmed average (Stage 2 reports these).
 struct AveragedSample {
   float mean[FEATURE_COUNT];
   float sd[FEATURE_COUNT];
-  float temp_c = NAN, ph_mv = NAN, tds_mv = NAN, turb_mv = NAN, density_g = NAN;
-  float temp_sd = 0, ph_sd = 0, tds_sd = 0, turb_sd = 0, density_sd = 0;
+  float temp_c = NAN, ph_mv = NAN, tds_mv = NAN, turb_mv = NAN;
+  float temp_sd = 0, ph_sd = 0, tds_sd = 0, turb_sd = 0;
   uint16_t r = 0, g = 0, b = 0, c = 0;
   uint16_t n = 0;          // reads that survived trimming
   bool ok = false;
@@ -67,9 +66,6 @@ struct Calibration {
 
   float col_wr = 0, col_wg = 0, col_wb = 0, col_wc = 0;  // white reference (0 = unset)
 
-  long  hx_offset = 0;          // load cell tare, raw counts
-  float hx_scale  = 420.0f;     // raw counts per gram — MUST be calibrated per cell
-
   // ADC divider ratios: sensor_mv = pin_mv * div. 2.0 means a 2:1 divider (§3).
   float div_ph = 2.0f, div_tds = 1.0f, div_turb = 2.0f;
 
@@ -77,7 +73,6 @@ struct Calibration {
   uint16_t avg_ms     = 3000;   // averaging window for one sample/test (§11)
   uint16_t flush_ms   = 5000;   // auto-flush duration (§11)
   float    conf_threshold = 0.60f;  // "Uncertain" below this (§6)
-  float    chamber_ml = 100.0f; // fixed chamber volume used for specific gravity
 };
 
 extern Calibration cal;
@@ -96,14 +91,11 @@ bool calPhPoint(float ph_point);        // capture current mV as the 7.0 or 4.0 
 bool calTdsWithKnown(float known_ppm);  // solve K from a known solution (<=0 = keep default)
 void calTurbidityClear();               // current mV becomes the clear-water zero
 void calColorWhite();                   // current RGBC becomes the white reference
-void calTare();                         // zero the load cell
-bool calDensitySpan(float known_g);     // set counts-per-gram from a known weight
 
 // Derived / display-only conversions (NOT model features — see features.h)
 float phFromMv(float mv);
 float tdsPpm(float mv, float temp_c);
 float turbidityNtu(float mv);
-float specificGravity(float grams, float temp_c);   // temp-corrected to 20 C
 
 // Build the model feature vector from a reading (order per features.h)
 void featuresFrom(const Reading& r, float out[FEATURE_COUNT]);
@@ -124,8 +116,3 @@ void pumpUpdate();
 
 // All-sensors health check. Fills ok_* flags, writes a reason into `why` on failure.
 bool sensorsSelftest(Reading& out, char* why, size_t why_len);
-
-// HX711 diagnostics: the last raw count, and how many times the chip has signalled
-// ready. If the read count never climbs, the HX711 is not responding (power/DOUT).
-long     sensorsScaleRaw();
-uint32_t sensorsScaleReads();

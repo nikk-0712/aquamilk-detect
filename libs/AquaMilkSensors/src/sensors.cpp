@@ -6,7 +6,6 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Adafruit_TCS34725.h>
-#include <HX711.h>
 
 // ------------------------------------------------------------------ internals
 Calibration cal;
@@ -17,9 +16,6 @@ static Reading g_r;
 static OneWire           oneWire(PIN_ONEWIRE);
 static DallasTemperature ds18b20(&oneWire);
 static Adafruit_TCS34725  tcs(TCS34725_INTEGRATIONTIME_24MS, TCS34725_GAIN_1X);
-static HX711             scale;
-static long              hx_last_raw = 0;   // last raw HX711 count (diagnostic)
-static uint32_t          hx_reads = 0;      // times the HX711 signalled ready (diagnostic)
 
 static bool     tcs_present = false;
 static uint32_t t_analog = 0, t_color = 0, t_temp_req = 0;
@@ -29,10 +25,8 @@ static bool     temp_pending = false;
 static bool     pump_on = false;
 static uint32_t pump_until = 0;
 
-// Averaging state. Channels 0..8 are the feature vector (features.h); channel 9
-// is density in grams, which the CSV wants next to the derived specific gravity.
-#define AVG_CH      (FEATURE_COUNT + 1)
-#define AVG_DENS_G  FEATURE_COUNT
+// Averaging state. Channels 0..FEATURE_COUNT-1 are the feature vector (features.h).
+#define AVG_CH      FEATURE_COUNT
 #define AVG_MAX     96
 static float    avg_buf[AVG_CH][AVG_MAX];
 static uint16_t avg_n = 0;
@@ -98,8 +92,6 @@ void calLoad() {
   cal.col_wg      = prefs.getFloat ("col_wg",   d.col_wg);
   cal.col_wb      = prefs.getFloat ("col_wb",   d.col_wb);
   cal.col_wc      = prefs.getFloat ("col_wc",   d.col_wc);
-  cal.hx_offset   = prefs.getLong  ("hx_off",   d.hx_offset);
-  cal.hx_scale    = prefs.getFloat ("hx_scale", d.hx_scale);
   cal.div_ph      = prefs.getFloat ("div_ph",   d.div_ph);
   cal.div_tds     = prefs.getFloat ("div_tds",  d.div_tds);
   cal.div_turb    = prefs.getFloat ("div_turb", d.div_turb);
@@ -107,12 +99,9 @@ void calLoad() {
   cal.avg_ms      = prefs.getUShort("avg_ms",   d.avg_ms);
   cal.flush_ms    = prefs.getUShort("flush_ms", d.flush_ms);
   cal.conf_threshold = prefs.getFloat("conf_thr", d.conf_threshold);
-  cal.chamber_ml  = prefs.getFloat ("chamber",  d.chamber_ml);
   prefs.end();
   if (cal.oversample < 1)   cal.oversample = 1;
   if (cal.oversample > 256) cal.oversample = 256;
-  scale.set_offset(cal.hx_offset);
-  scale.set_scale(cal.hx_scale != 0 ? cal.hx_scale : 1.0f);
 }
 
 void calSave() {
@@ -128,8 +117,6 @@ void calSave() {
   prefs.putFloat ("col_wg",   cal.col_wg);
   prefs.putFloat ("col_wb",   cal.col_wb);
   prefs.putFloat ("col_wc",   cal.col_wc);
-  prefs.putLong  ("hx_off",   cal.hx_offset);
-  prefs.putFloat ("hx_scale", cal.hx_scale);
   prefs.putFloat ("div_ph",   cal.div_ph);
   prefs.putFloat ("div_tds",  cal.div_tds);
   prefs.putFloat ("div_turb", cal.div_turb);
@@ -137,7 +124,6 @@ void calSave() {
   prefs.putUShort("avg_ms",   cal.avg_ms);
   prefs.putUShort("flush_ms", cal.flush_ms);
   prefs.putFloat ("conf_thr", cal.conf_threshold);
-  prefs.putFloat ("chamber",  cal.chamber_ml);
   prefs.end();
 }
 
@@ -146,8 +132,6 @@ void calFactoryReset() {
   prefs.clear();
   prefs.end();
   cal = Calibration();
-  scale.set_offset(cal.hx_offset);
-  scale.set_scale(cal.hx_scale);
 }
 
 // ------------------------------------------------------------------- lifecycle
@@ -164,9 +148,7 @@ bool sensorsBegin() {
   ds18b20.setWaitForConversion(false);   // async: request now, collect ~750 ms later
   ds18b20.setResolution(12);
 
-  scale.begin(PIN_HX711_DOUT, PIN_HX711_SCK);
-
-  calLoad();                             // also pushes offset/scale into the HX711
+  calLoad();
   pumpBegin();
 
   g_r.ts_ms = millis();
@@ -207,16 +189,6 @@ void sensorsUpdate() {
     g_r.ok_color = (c > 0);
   }
 
-  // --- HX711: read whenever a conversion is sitting there (~10/s) ---
-  if (scale.is_ready()) {
-    long raw = scale.read();
-    hx_last_raw = raw; hx_reads++;                    // diagnostic: prove the HX711 responds
-    float grams = (raw - (float)cal.hx_offset) / (cal.hx_scale != 0 ? cal.hx_scale : 1.0f);
-    // light smoothing: the cell is noisy at 10 SPS and the chamber is not moving
-    g_r.density_g = isnan(g_r.density_g) ? grams : (0.7f * g_r.density_g + 0.3f * grams);
-    g_r.ok_scale = true;
-  }
-
   pumpUpdate();
   if (avg_running) avgFeed();
 }
@@ -253,21 +225,10 @@ float turbidityNtu(float mv) {
   return ntu;
 }
 
-float specificGravity(float grams, float temp_c) {
-  if (isnan(grams) || cal.chamber_ml <= 0) return NAN;
-  float t = isnan(temp_c) ? 25.0f : temp_c;
-  float rho = grams / cal.chamber_ml;                        // g/mL as measured
-  // Correct to 20 C. 2.1e-4 /K is the volumetric expansion of milk/water near room
-  // temperature; tune it here if you characterise your own chamber.
-  float rho20 = rho * (1.0f + 2.1e-4f * (t - 20.0f));
-  return rho20 / 0.998203f;                                  // vs water at 20 C
-}
-
 void featuresFrom(const Reading& r, float out[FEATURE_COUNT]) {
   out[F_PH]          = r.ph_mv;
   out[F_TDS]         = r.tds_mv;
   out[F_TURBIDITY]   = r.turb_mv;
-  out[F_DENSITY]     = specificGravity(r.density_g, r.temp_c);
   out[F_TEMPERATURE] = isnan(r.temp_c) ? 25.0f : r.temp_c;
   out[F_COLOR_R]     = r.r;
   out[F_COLOR_G]     = r.g;
@@ -312,27 +273,6 @@ void calColorWhite() {
   calSave();
 }
 
-long     sensorsScaleRaw()   { return hx_last_raw; }
-uint32_t sensorsScaleReads() { return hx_reads; }
-
-void calTare() {
-  scale.set_offset(scale.read_average(16));
-  cal.hx_offset = scale.get_offset();
-  g_r.density_g = NAN;                                  // drop the smoothing history
-  calSave();
-}
-
-bool calDensitySpan(float known_g) {
-  if (known_g <= 0) return false;
-  long raw = scale.read_average(16);
-  float counts = (float)(raw - cal.hx_offset);
-  if (fabsf(counts) < 100.0f) return false;             // nothing on the cell
-  cal.hx_scale = counts / known_g;
-  scale.set_scale(cal.hx_scale);
-  calSave();
-  return true;
-}
-
 // ------------------------------------------------------------------ averaging
 void avgStart(uint16_t window_ms) {
   avg_n = 0;
@@ -354,7 +294,6 @@ void avgFeed() {
   float f[FEATURE_COUNT];
   featuresFrom(g_r, f);
   for (uint8_t i = 0; i < FEATURE_COUNT; i++) avg_buf[i][avg_n] = f[i];
-  avg_buf[AVG_DENS_G][avg_n] = g_r.density_g;
   avg_n++;
 }
 
@@ -364,14 +303,11 @@ AveragedSample avgFinish() {
   if (avg_n == 0) return s;                             // ok stays false
 
   for (uint8_t i = 0; i < FEATURE_COUNT; i++) trimmed_stats(avg_buf[i], avg_n, s.mean[i], s.sd[i]);
-  float dens_mean, dens_sd;
-  trimmed_stats(avg_buf[AVG_DENS_G], avg_n, dens_mean, dens_sd);
 
   s.ph_mv     = s.mean[F_PH];          s.ph_sd      = s.sd[F_PH];
   s.tds_mv    = s.mean[F_TDS];         s.tds_sd     = s.sd[F_TDS];
   s.turb_mv   = s.mean[F_TURBIDITY];   s.turb_sd    = s.sd[F_TURBIDITY];
   s.temp_c    = s.mean[F_TEMPERATURE]; s.temp_sd    = s.sd[F_TEMPERATURE];
-  s.density_g = dens_mean;             s.density_sd = dens_sd;
   s.r = (uint16_t)lroundf(s.mean[F_COLOR_R]);
   s.g = (uint16_t)lroundf(s.mean[F_COLOR_G]);
   s.b = (uint16_t)lroundf(s.mean[F_COLOR_B]);
@@ -424,14 +360,13 @@ bool sensorsSelftest(Reading& out, char* why, size_t why_len) {
   out = g_r;
 
   bool analog_ok = !isnan(g_r.ph_mv) && !isnan(g_r.tds_mv) && !isnan(g_r.turb_mv);
-  bool ok = analog_ok && g_r.ok_temp && g_r.ok_color && g_r.ok_scale;
+  bool ok = analog_ok && g_r.ok_temp && g_r.ok_color;
   if (why && why_len) {
     if (ok) snprintf(why, why_len, "all ok");
-    else    snprintf(why, why_len, "no response: %s%s%s%s",
+    else    snprintf(why, why_len, "no response: %s%s%s",
                      analog_ok    ? "" : "analog ",
                      g_r.ok_temp  ? "" : "ds18b20 ",
-                     g_r.ok_color ? "" : "tcs34725 ",
-                     g_r.ok_scale ? "" : "hx711");
+                     g_r.ok_color ? "" : "tcs34725 ");
   }
   return ok;
 }

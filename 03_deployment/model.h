@@ -34,10 +34,10 @@ static const uint16_t SVM_N_SV[CLASS_COUNT] = { 1, 1, 1, 1 };
 
 // One dummy support vector per class at the origin of the scaled space.
 static const float SVM_SV[SVM_N_SV_TOTAL][FEATURE_COUNT] = {
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+  { 0, 0, 0, 0, 0, 0, 0, 0 },
+  { 0, 0, 0, 0, 0, 0, 0, 0 },
+  { 0, 0, 0, 0, 0, 0, 0, 0 },
+  { 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 // All-zero duals + zero intercepts => every pairwise decision is a tie, every

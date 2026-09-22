@@ -14,9 +14,8 @@
 // --- OneWire (DS18B20), needs 4.7k pull-up to 3V3 ---
 #define PIN_ONEWIRE 4
 
-// --- HX711 load cell amp ---
-#define PIN_HX711_DOUT 16
-#define PIN_HX711_SCK  17
+// (HX711 load-cell amp removed — the weight sensor is no longer in the build.
+//  GPIO16 and GPIO17 are now free.)
 
 // --- TFT ST7735 128x160 on VSPI ---
 #define PIN_TFT_SCLK 18

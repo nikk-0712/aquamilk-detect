@@ -84,11 +84,10 @@ static uint32_t t_push = 0, t_tft = 0;
 static void logAppend(const Verdict& v, const Reading& r) {
   File f = LittleFS.open(LOG_PATH, FILE_APPEND);
   if (!f) return;
-  f.printf("%lu,%s,%.3f,%.0f,%.0f,%.0f,%.4f,%.1f\n",
+  f.printf("%lu,%s,%.3f,%.0f,%.0f,%.0f,%.1f\n",
            (unsigned long)millis(),
            v.uncertain ? "uncertain" : CLASS_NAMES[v.cls],
-           v.conf, r.ph_mv, r.tds_mv, r.turb_mv,
-           specificGravity(r.density_g, r.temp_c), r.temp_c);
+           v.conf, r.ph_mv, r.tds_mv, r.turb_mv, r.temp_c);
   size_t sz = f.size();
   f.close();
 
@@ -327,11 +326,6 @@ static void routes() {
     bool ok = (app == IDLE);
     if (ok) { pumpStart(cal.flush_ms); app = FLUSHING; pushStatus(); }
     q->send(200, "application/json", ok ? "{\"ok\":true}" : "{\"ok\":false,\"msg\":\"busy\"}");
-  });
-
-  server.on("/api/tare", HTTP_POST, [](AsyncWebServerRequest* q) {
-    calTare();
-    q->send(200, "application/json", "{\"ok\":true}");
   });
 
   server.on("/api/selftest", HTTP_POST, [](AsyncWebServerRequest* q) {

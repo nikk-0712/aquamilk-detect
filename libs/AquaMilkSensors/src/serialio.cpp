@@ -35,16 +35,12 @@ void readingJson(JsonDocument& d) {
   d["tds"]  = r.tds_mv;
   d["turb"] = r.turb_mv;
   d["temp"] = r.temp_c;
-  d["dens"] = r.density_g;
   d["r"] = r.r; d["g"] = r.g; d["b"] = r.b; d["c"] = r.c;
   d["ts"] = r.ts_ms;
-  d["hx_raw"]   = sensorsScaleRaw();      // HX711 diagnostics (weight debug)
-  d["hx_reads"] = sensorsScaleReads();
 
   JsonObject calc = d["calc"].to<JsonObject>();
   float ph = phFromMv(r.ph_mv);
   if (isnan(ph)) calc["ph"] = nullptr; else calc["ph"] = ph;
   calc["ppm"] = tdsPpm(r.tds_mv, r.temp_c);
   calc["ntu"] = turbidityNtu(r.turb_mv);
-  calc["sg"]  = specificGravity(r.density_g, r.temp_c);
 }

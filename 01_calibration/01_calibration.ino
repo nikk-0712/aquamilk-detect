@@ -65,15 +65,12 @@ static void sendCal() {
   d["turb_clear_mv"] = cal.turb_clear_mv;
   JsonArray w = d["col_w"].to<JsonArray>();
   w.add(cal.col_wr); w.add(cal.col_wg); w.add(cal.col_wb); w.add(cal.col_wc);
-  d["hx_offset"]  = cal.hx_offset;
-  d["hx_scale"]   = cal.hx_scale;
   d["div_ph"]     = cal.div_ph;
   d["div_tds"]    = cal.div_tds;
   d["div_turb"]   = cal.div_turb;
   d["oversample"] = cal.oversample;
   d["avg_ms"]     = cal.avg_ms;
   d["flush_ms"]   = cal.flush_ms;
-  d["chamber_ml"] = cal.chamber_ml;
   d["rotation"]   = dispRotation();
   d["conf_thr"]   = cal.conf_threshold;
   serializeJson(d, Serial);
@@ -100,7 +97,6 @@ static void doSet(JsonDocument& in) {
   else if (!strcmp(key, "div_turb"))   cal.div_turb = val | 1.0f;
   else if (!strcmp(key, "avg_ms"))     cal.avg_ms   = constrain((int)(val | 3000), 200, 20000);
   else if (!strcmp(key, "flush_ms"))   cal.flush_ms = constrain((int)(val | 5000), 0, 60000);
-  else if (!strcmp(key, "chamber_ml")) cal.chamber_ml = val | 100.0f;
   else if (!strcmp(key, "conf_thr"))   cal.conf_threshold = constrain((float)(val | 0.60f), 0.0f, 0.99f);
   else if (!strcmp(key, "rotation"))   dispSetRotation((uint8_t)constrain((int)(val | 0), 0, 3));
   else { snprintf(msg, sizeof msg, "unknown key %s", key); sendAck("set", false, msg); return; }
@@ -127,10 +123,6 @@ static void doCalibrate(JsonDocument& in) {
   } else if (!strcmp(s, "color")) {
     calColorWhite();
     sendAck("calibrate", true, "white reference stored");
-  } else if (!strcmp(s, "density")) {
-    float g = in["known_g"] | 0.0f;
-    bool ok = calDensitySpan(g);
-    sendAck("calibrate", ok, ok ? "density span stored" : "put the known weight on first");
   } else {
     sendAck("calibrate", false, "unknown sensor");
     return;
@@ -149,9 +141,8 @@ static void doSelftest() {
   d["analog"]   = !isnan(r.ph_mv) && !isnan(r.tds_mv) && !isnan(r.turb_mv);
   d["ds18b20"]  = r.ok_temp;
   d["tcs34725"] = r.ok_color;
-  d["hx711"]    = r.ok_scale;
   d["ph"] = r.ph_mv; d["tds"] = r.tds_mv; d["turb"] = r.turb_mv;
-  d["temp"] = r.temp_c; d["dens"] = r.density_g;
+  d["temp"] = r.temp_c;
   d["r"] = r.r; d["g"] = r.g; d["b"] = r.b; d["c"] = r.c;
   serializeJson(d, Serial);
   Serial.println();
@@ -165,7 +156,6 @@ static void handleLine(char* line) {
 
   if (!strcmp(cmd, "calibrate"))          doCalibrate(in);
   else if (!strcmp(cmd, "set"))           doSet(in);
-  else if (!strcmp(cmd, "tare"))        { calTare(); sendAck("tare", true, "chamber zeroed"); sendCal(); }
   else if (!strcmp(cmd, "flush")) {
     if (pumpBusy()) { sendAck("flush", false, "busy"); return; }
     uint32_t ms = in["ms"] | cal.flush_ms;
@@ -181,7 +171,7 @@ static void handleLine(char* line) {
 // ------------------------------------------------------------------------ TFT
 static void updateTft() {
   const Reading& r = sensorsLatest();
-  static char v_ph[14], v_cal[14], v_tds[14], v_turb[14], v_t[14], v_sg[14];
+  static char v_ph[14], v_cal[14], v_tds[14], v_turb[14], v_t[14];
   float ph = phFromMv(r.ph_mv);
   snprintf(v_ph,   sizeof v_ph,   "%.0f mV", r.ph_mv);
   if (isnan(ph)) snprintf(v_cal, sizeof v_cal, "raw");
@@ -189,10 +179,9 @@ static void updateTft() {
   snprintf(v_tds,  sizeof v_tds,  "%.0f ppm", tdsPpm(r.tds_mv, r.temp_c));
   snprintf(v_turb, sizeof v_turb, "%.0f NTU", turbidityNtu(r.turb_mv));
   snprintf(v_t,    sizeof v_t,    "%.1f C", r.temp_c);
-  snprintf(v_sg,   sizeof v_sg,   "%.3f", specificGravity(r.density_g, r.temp_c));
 
-  const char* keys[] = { "pH raw", "pH", "TDS", "Turbidity", "Temp", "Density" };
-  const char* vals[] = { v_ph, v_cal, v_tds, v_turb, v_t, v_sg };
+  const char* keys[] = { "pH raw", "pH", "TDS", "Turbidity", "Temp" };
+  const char* vals[] = { v_ph, v_cal, v_tds, v_turb, v_t };
   dispKV(pumpBusy() ? "Flushing..." : "Calibration mode", keys, vals,
          sizeof(keys) / sizeof(keys[0]));
 }

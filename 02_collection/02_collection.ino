@@ -11,7 +11,7 @@
 
   CSV columns (match the trainer, web/app.js COLUMNS):
     timestamp_iso, milk_type, adulterant, level_pct, source, temp_c, ph_raw_mv,
-    tds_raw_mv, turbidity_raw_mv, density_g, color_r, color_g, color_b, color_clear
+    tds_raw_mv, turbidity_raw_mv, color_r, color_g, color_b, color_clear
   (timestamp_iso is device ms since boot — the device has no clock; the trainer
    uses the sensor columns, not the timestamp.)
 
@@ -34,7 +34,7 @@
 
 static const char* CSV_HEADER =
   "timestamp_iso,milk_type,adulterant,level_pct,source,temp_c,ph_raw_mv,"
-  "tds_raw_mv,turbidity_raw_mv,density_g,color_r,color_g,color_b,color_clear\n";
+  "tds_raw_mv,turbidity_raw_mv,color_r,color_g,color_b,color_clear\n";
 
 static AsyncWebServer server(80);
 static DNSServer      dns;
@@ -73,9 +73,9 @@ static uint32_t csvCountRows() {
 static void csvAppend(const AveragedSample& s) {
   File f = LittleFS.open(CSV_PATH, FILE_APPEND);
   if (!f) return;
-  f.printf("%lu,%s,%s,%d,%s,%.2f,%.1f,%.1f,%.1f,%.3f,%u,%u,%u,%u\n",
+  f.printf("%lu,%s,%s,%d,%s,%.2f,%.1f,%.1f,%.1f,%u,%u,%u,%u\n",
            (unsigned long)millis(), p_milk, p_adu, p_lvl, p_src,
-           s.temp_c, s.ph_mv, s.tds_mv, s.turb_mv, s.density_g,
+           s.temp_c, s.ph_mv, s.tds_mv, s.turb_mv,
            s.r, s.g, s.b, s.c);
   f.close();
 }
@@ -94,18 +94,17 @@ static void clean(char* dst, size_t n, const String& src) {
 // ------------------------------------------------------------------------ TFT
 static void updateTft() {
   const Reading& r = sensorsLatest();
-  static char v_cnt[10], v_w[12], v_ph[12], v_tds[12], v_turb[12], v_t[12];
+  static char v_cnt[10], v_ph[12], v_tds[12], v_turb[12], v_t[12];
   snprintf(v_cnt,  sizeof v_cnt,  "%lu", (unsigned long)sample_count);
-  snprintf(v_w,    sizeof v_w,    "%.1f g", r.density_g);      // weight in grams
   snprintf(v_ph,   sizeof v_ph,   "%.0f mV", r.ph_mv);
   snprintf(v_tds,  sizeof v_tds,  "%.0f mV", r.tds_mv);
   snprintf(v_turb, sizeof v_turb, "%.0f mV", r.turb_mv);
   snprintf(v_t,    sizeof v_t,    "%.1f C", r.temp_c);
   const char* status = state == AVERAGING ? "Capturing..."
                      : state == FLUSHING  ? "Flushing..." : "Wi-Fi collect page";
-  const char* keys[] = { "Samples", "Weight", "pH", "TDS", "Turbidity", "Temp" };
-  const char* vals[] = { v_cnt, v_w, v_ph, v_tds, v_turb, v_t };
-  dispKV(status, keys, vals, 6);
+  const char* keys[] = { "Samples", "pH", "TDS", "Turbidity", "Temp" };
+  const char* vals[] = { v_cnt, v_ph, v_tds, v_turb, v_t };
+  dispKV(status, keys, vals, 5);
 }
 
 // ------------------------------------------------------------- Wi-Fi / captive
@@ -159,20 +158,16 @@ a.dl{display:block;text-align:center;padding:14px;border-radius:10px;background:
 </div>
 <div class=card>
 <div class=grid>
-<div class="m big"><b id=w>-</b><span>WEIGHT (g)</span></div>
 <div class=m><b id=ph>-</b><span>pH (mV)</span></div>
 <div class=m><b id=tds>-</b><span>TDS (mV)</span></div>
 <div class=m><b id=turb>-</b><span>Turbidity (mV)</span></div>
 <div class=m><b id=temp>-</b><span>Temp (C)</span></div>
 <div class=m><b id=col>-</b><span>Colour R/G/B</span></div>
 <div class=m><b id=cnt>0</b><span>Saved samples</span></div>
-<div class=m><b id=hxraw>-</b><span>HX711 raw</span></div>
-<div class=m><b id=hxrd>-</b><span>HX711 reads</span></div>
 </div>
 <div class=row>
 <button id=cap>Capture</button>
 <button class=sec id=flush>Flush</button>
-<button class=sec id=tare>Tare</button>
 </div>
 <div id=st></div>
 <a class=dl href="/api/csv" download="samples.csv">Download CSV</a>
@@ -182,11 +177,9 @@ a.dl{display:block;text-align:center;padding:14px;border-radius:10px;background:
 var $=function(i){return document.getElementById(i)};
 var busy=false;
 function poll(){fetch('/api/reading').then(function(r){return r.json()}).then(function(d){
- $('w').textContent=(d.dens==null?0:d.dens).toFixed(1);
  $('ph').textContent=Math.round(d.ph);$('tds').textContent=Math.round(d.tds);
  $('turb').textContent=Math.round(d.turb);$('temp').textContent=(d.temp==null?0:d.temp).toFixed(1);
  $('col').textContent=d.r+'/'+d.g+'/'+d.b;$('cnt').textContent=d.count;
- $('hxraw').textContent=d.hx_raw;$('hxrd').textContent=d.hx_reads;
  var wb=busy;busy=(d.state!=='idle');$('cap').disabled=busy;
  if(!busy&&wb)$('st').textContent='saved - '+d.count+' samples';
 }).catch(function(){$('st').textContent='link lost - move closer / rejoin';})}
@@ -197,7 +190,6 @@ $('cap').onclick=function(){
  fetch('/api/capture',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:p});
 };
 $('flush').onclick=function(){fetch('/api/flush',{method:'POST'})};
-$('tare').onclick=function(){fetch('/api/tare',{method:'POST'}).then(function(){$('st').textContent='chamber zeroed'})};
 $('clr').onclick=function(){if(confirm('Erase all saved samples on the device?'))fetch('/api/clear',{method:'POST'}).then(function(){$('st').textContent='cleared'})};
 </script></body></html>)HTML";
 
@@ -230,11 +222,6 @@ static void routes() {
 
   server.on("/api/flush", HTTP_POST, [](AsyncWebServerRequest* q) {
     if (state == IDLE) { pumpStart(cal.flush_ms); state = FLUSHING; }
-    q->send(200, "application/json", "{\"ok\":true}");
-  });
-
-  server.on("/api/tare", HTTP_POST, [](AsyncWebServerRequest* q) {
-    calTare();
     q->send(200, "application/json", "{\"ok\":true}");
   });
 
