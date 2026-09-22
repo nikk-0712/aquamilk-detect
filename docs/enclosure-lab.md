@@ -1,5 +1,9 @@
 # Enclosure — bench instrument
 
+> **Note:** the load cell and its density feature were removed from the electronics. The
+> cup now just rests on the platform (a passive shelf); the weighing, tare and density
+> passages below are historical and no longer apply.
+
 Model: [`hardware/enclosure-lab.scad`](../hardware/enclosure-lab.scad). This is a separate
 file and a separate design; it does not replace `hardware/enclosure.scad`.
 

@@ -1,9 +1,12 @@
 # Enclosure
 
-The enclosure is not a box to hide the wiring in. Three of the features the model uses —
-density, colour and turbidity — are really *mechanical* measurements, and the enclosure is
-what makes them repeatable. Get the load-cell mounting or the light shrouding wrong and no
-amount of retraining fixes it.
+> **Note:** the load cell and its density feature were removed from the electronics. The
+> cup now just rests on the platform (a passive shelf); the weighing, tare and
+> specific-gravity passages below are historical and no longer apply.
+
+The enclosure is not a box to hide the wiring in. Two of the features the model uses —
+colour and turbidity — are really *mechanical* measurements, and the enclosure is what
+makes them repeatable. Get the light shrouding wrong and no amount of retraining fixes it.
 
 The printable model is [`hardware/enclosure.scad`](../hardware/enclosure.scad). Every number
 below is a variable at the top of that file, and the file is the one to trust if the two ever
@@ -93,10 +96,8 @@ floor: most pH probes only strictly need the bulb and reference junction covered
 one number in this design with no margin, so check pH settling time during calibration before
 committing to it.
 
-Specific gravity is `grams / chamber_ml`
-([`sensors.cpp`](../libs/AquaMilkSensors/src/sensors.cpp)), so the dose only has to be
-**repeatable**, not exact — the scaler absorbs a constant offset. Set `chamber_ml = 85` on the
-Calibrate page.
+(The cup volume no longer feeds any measurement — density was removed — so the exact
+fill level only matters for keeping the probes submerged.)
 
 ---
 

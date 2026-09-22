@@ -1,5 +1,9 @@
 # Enclosure — the working box
 
+> **Note:** the load cell and its density feature were removed from the electronics. The
+> cup now just rests on the platform (a passive shelf); the weighing, tare and density
+> passages below are historical and no longer apply.
+
 Model: [`hardware/enclosure-simple.scad`](../hardware/enclosure-simple.scad). Separate file;
 it does not replace `enclosure.scad` or `enclosure-lab.scad`.
 
