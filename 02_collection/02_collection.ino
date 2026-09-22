@@ -94,17 +94,18 @@ static void clean(char* dst, size_t n, const String& src) {
 // ------------------------------------------------------------------------ TFT
 static void updateTft() {
   const Reading& r = sensorsLatest();
-  static char v_cnt[10], v_ph[12], v_tds[12], v_turb[12], v_t[12];
+  static char v_cnt[10], v_ph[12], v_tds[12], v_turb[12], v_t[12], v_col[16];
   snprintf(v_cnt,  sizeof v_cnt,  "%lu", (unsigned long)sample_count);
   snprintf(v_ph,   sizeof v_ph,   "%.0f mV", r.ph_mv);
   snprintf(v_tds,  sizeof v_tds,  "%.0f mV", r.tds_mv);
   snprintf(v_turb, sizeof v_turb, "%.0f mV", r.turb_mv);
   snprintf(v_t,    sizeof v_t,    "%.1f C", r.temp_c);
+  snprintf(v_col,  sizeof v_col,  "%u/%u/%u", r.r, r.g, r.b);
   const char* status = state == AVERAGING ? "Capturing..."
                      : state == FLUSHING  ? "Flushing..." : "Wi-Fi collect page";
-  const char* keys[] = { "Samples", "pH", "TDS", "Turbidity", "Temp" };
-  const char* vals[] = { v_cnt, v_ph, v_tds, v_turb, v_t };
-  dispKV(status, keys, vals, 5);
+  const char* keys[] = { "Samples", "pH", "TDS", "Turbidity", "Temp", "Colour" };
+  const char* vals[] = { v_cnt, v_ph, v_tds, v_turb, v_t, v_col };
+  dispKV(status, keys, vals, 6);
 }
 
 // ------------------------------------------------------------- Wi-Fi / captive
