@@ -26,7 +26,6 @@ flowchart TB
   TURB["Turbidity module<br/>0–4.5 V out"] -->|2:1 divider| A34
   COL["TCS34725"] --- I2C
   DS["DS18B20<br/>4.7 kΩ to 3V3"] --- OW
-  LC["HX711 + 3 kg cell"] --- HX
   TFT["ST7735 128×160"] --- SPI
   PWM --> M["3.3 V relay module"] --> P["6 V pump"]
   PAD["TTP223 pad"] --> TCH
@@ -60,8 +59,6 @@ GPIO36/39/34 are **input-only** pins. That is fine here and is why they were cho
 | TCS34725 SDA / SCL | GPIO21 / GPIO22 | 3V3 power. Most breakouts have pull-ups fitted |
 | DS18B20 data | GPIO4 | **4.7 kΩ pull-up from data to 3V3** — without it, -127 °C |
 | DS18B20 VCC / GND | 3V3 / GND | |
-| HX711 DT / SCK | GPIO16 / GPIO17 | 3V3 or 5 V both work; 3V3 is quieter |
-| Load cell → HX711 | E+ E- A+ A- | Colour order per your cell's datasheet |
 | TFT SCLK / MOSI | GPIO18 / GPIO23 | VSPI |
 | TFT CS / DC / RST | GPIO5 / GPIO2 / GPIO15 | DC/RST on strapping pins — pull the DevKit from its socket to flash, then reseat |
 | TFT LED / BL | 3V3 | Move to GPIO32 if you want PWM dimming |
@@ -100,7 +97,7 @@ have one fitted.
 flowchart LR
   ADP["12 V 1.5 A<br/>(18 W)"] --> B1["LM2596 #1<br/>set to 6.0 V"] --> PUMP["Pump ≈ 3 W"]
   ADP --> B2["LM2596 #2<br/>set to 5.0 V"] --> ESP["ESP32<br/>5V pin"]
-  ESP --> LDO["on-board 3V3"] --> D3["TFT, TCS34725,<br/>DS18B20, HX711"]
+  ESP --> LDO["on-board 3V3"] --> D3["TFT, TCS34725,<br/>DS18B20"]
   B2 --> A5["pH / TDS / turbidity<br/>boards at 5 V"]
 ```
 

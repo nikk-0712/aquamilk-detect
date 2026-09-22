@@ -2,8 +2,8 @@
 //
 // Everything here is non-blocking-ish: sensorsUpdate() must be called often from
 // loop(); each channel refreshes at its own cadence (DS18B20 needs 750 ms per
-// conversion, HX711 delivers ~10 samples/s, the colour chip needs its integration
-// time) and the newest value of every channel is cached in a Reading.
+// conversion, the colour chip needs its integration time) and the newest value of
+// every channel is cached in a Reading.
 //
 // Pin map: pins.h (PROJECT_CONTEXT.md §3). Calibration lives in NVS namespace
 // "amd_cal". Feature order: features.h.

@@ -6,15 +6,15 @@
   (PROJECT_CONTEXT.md §8). Calibration constants live in NVS namespace "amd_cal".
 
   ---------------------------------------------------------------- device -> host
-    {"t":"reading", ph, tds, turb, temp, dens, r, g, b, c, ts,
-                    calc:{ph, ppm, ntu, sg}, ok:{temp,color,scale}}
+    {"t":"reading", ph, tds, turb, temp, r, g, b, c, ts,
+                    calc:{ph, ppm, ntu}, ok:{temp,color}}
                                                   ~5 Hz. ph/tds/turb are millivolts
                                                   at the sensor board (divider applied);
                                                   calc.* are the calibrated human values
                                                   (calc.ph is null while pH raw mode is on).
     {"t":"ack",   cmd, ok, msg}                   every command is acked
     {"t":"cal",   ...}                            full calibration snapshot (see sendCal)
-    {"t":"selftest", ok, why, analog, ds18b20, tcs34725, hx711, ...}
+    {"t":"selftest", ok, why, analog, ds18b20, tcs34725, ...}
     {"t":"flush_done"}
 
   ---------------------------------------------------------------- host -> device
@@ -23,20 +23,18 @@
     {"cmd":"calibrate","sensor":"tds","known_ppm":707}   solve K (omit/0 = keep stock curve)
     {"cmd":"calibrate","sensor":"turbidity","point":"clear"}
     {"cmd":"calibrate","sensor":"color","point":"white"}
-    {"cmd":"calibrate","sensor":"density","known_g":100.0}
-    {"cmd":"tare"}                                       zero the empty chamber
     {"cmd":"flush","ms":5000}                            test the pump path
     {"cmd":"selftest"}                                   all sensors at once
     {"cmd":"get_cal"}                                    ask for the {"t":"cal"} snapshot
     {"cmd":"factory_reset"}                              wipe NVS
     {"cmd":"set","key":"<k>","val":<v>}  keys:
         ph_mode ("raw"|"cal"), oversample, div_ph, div_tds, div_turb,
-        avg_ms, flush_ms, chamber_ml, conf_thr, rotation (0..3)
+        avg_ms, flush_ms, conf_thr, rotation (0..3)
 
   Libraries (pinned in .github/workflows/build-firmware.yml):
     ArduinoJson 7.4.3, Adafruit TCS34725 1.4.4, Adafruit GFX 1.12.6,
     Adafruit ST7735 and ST7789 1.10.4, Adafruit BusIO 1.17.4, OneWire 2.3.8,
-    DallasTemperature 3.9.0, HX711 Arduino Library 0.7.5.
+    DallasTemperature 3.9.0.
     Core: esp32:esp32 3.3.10. Shared code: libs/AquaMilkSensors.
     Build FQBN: esp32:esp32:esp32:PartitionScheme=huge_app
     TFT is Adafruit_ST7735 (pins passed in the constructor, see display.h).

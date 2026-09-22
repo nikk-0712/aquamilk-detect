@@ -58,13 +58,12 @@ web app offers gets your model automatically.
 Exact order, matching `libs/AquaMilkSensors/src/features.h`:
 
 ```
-[ph, tds, turbidity, density, temperature, color_r, color_g, color_b, color_clear]
+[ph, tds, turbidity, temperature, color_r, color_g, color_b, color_clear]
 ```
 
-`raw_to_features()` in `utils.py` is the single definition of that mapping. It does
-exactly one transform: `density_g` in a fixed-volume chamber becomes a
-temperature-corrected **specific gravity**, with the same constants `sensors.cpp` uses.
-Everything else is fed as the raw millivolts and raw colour counts the CSV already holds.
+`raw_to_features()` in `utils.py` is the single definition of that mapping. It does no
+transforms: every feature is fed as the raw millivolts, temperature and raw colour
+counts the CSV already holds. (The density/load-cell feature was removed.)
 
 That is a deliberate choice. The CSV only stores raws, so training on raws means the
 firmware and the trainer cannot disagree about what a feature *is*, and re-calibrating

@@ -38,7 +38,6 @@ The system is delivered as **three separate Arduino firmwares** plus **one web a
 | Turbidity | Turbidity Sensor With Module | Analog → ADC1 | Starch/suspended solids; output 0–4.5 V → **needs divider** |
 | Colour | TCS34725 RGB+Clear | I²C | R,G,B,Clear channels as features |
 | Temperature | DS18B20 waterproof (genuine chip, 1 m) | OneWire | Temp compensation for pH/TDS/density |
-| Density | HX711 + 3 kg load cell | HX711 2-wire | Weigh fixed-volume chamber → specific gravity |
 | Display | 1.8" TFT ST7735, 128×160 | SPI | On-device verdict + status |
 | Pump | 6 V peristaltic dosing pump | via relay | Auto-flush chamber with distilled water |
 | Pump switch | **3.3 V relay module** (user owns) | GPIO (digital) | Driven direct from GPIO25 — see §4 |
@@ -53,7 +52,7 @@ The system is delivered as **three separate Arduino firmwares** plus **one web a
 
 **Purchase split (both free-shipping > ₹999, ₹0 shipping):**
 - **Robu.in:** pH kit (₹1,975) + DS18B20 genuine-chip (₹89).
-- **Robocraze:** DFRobot TDS, turbidity, 6 V pump, TCS34725, 1.8" TFT, 3 kg load cell + HX711, LM2596, silicone tube.
+- **Robocraze:** DFRobot TDS, turbidity, 6 V pump, TCS34725, 1.8" TFT, LM2596, silicone tube.
 - Total to buy ≈ **₹4,969** (under ₹5,000 budget). Owned parts saved ≈ ₹600.
 
 ---
@@ -70,8 +69,6 @@ Use these exact pins in all firmwares.
 | TCS34725 SDA | **21** | I²C |
 | TCS34725 SCL | **22** | I²C |
 | DS18B20 data | **4** | OneWire + 4.7 kΩ pull-up to 3V3 |
-| HX711 DOUT | **16** | |
-| HX711 SCK | **17** | |
 | TFT SCLK | **18** | VSPI |
 | TFT MOSI | **23** | VSPI |
 | TFT CS | **5** | strapping pin — fine as output |
@@ -108,14 +105,14 @@ One captured sample = one CSV row. Store **raw** sensor values (so features can 
 ```
 timestamp_iso, milk_type, adulterant, level_pct, source,
 temp_c, ph_raw_mv, tds_raw_mv, turbidity_raw_mv,
-density_g, color_r, color_g, color_b, color_clear
+color_r, color_g, color_b, color_clear
 ```
 
 - `milk_type` ∈ {cow, buffalo, toned}
 - `adulterant` ∈ {pure, water, detergent, starch}
 - `level_pct` ∈ {0, 5, 10, 20, 30, …} (0 for pure)
 - `source` = free text (dairy / shop / person / place) — **user's tagging field**
-- `*_raw_mv` = averaged ADC millivolts; `density_g` = temp-corrected grams for the fixed volume; color_* = TCS34725 channels.
+- `*_raw_mv` = averaged ADC millivolts; color_* = TCS34725 channels.
 - CSV is created and saved **in the browser** (no server, no SD card).
 
 **Feature vector for the model (≈10):** `ph, tds, turbidity, density(temp-corrected specific gravity), temperature, color_r, color_g, color_b, color_clear` (+ optionally derived ratios). Fit a `StandardScaler`; export scaler constants alongside the model.

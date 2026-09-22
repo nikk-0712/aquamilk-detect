@@ -66,7 +66,6 @@ ESP32 DevKit V1 (38-pin, ESP32-WROOM-32), Arduino core — not ESP-IDF.
 | Turbidity | Turbidity sensor + module | analog → ADC1 |
 | Colour | TCS34725 RGB + Clear | I²C |
 | Temperature | DS18B20 waterproof | OneWire |
-| Density | HX711 + 3 kg load cell | 2-wire |
 | Display | 1.8" ST7735 TFT, 128×160 | SPI |
 | Pump | 6 V peristaltic dosing pump | via 3.3 V relay module |
 | Control | Browser dashboard (Wi-Fi) | — |
@@ -83,7 +82,6 @@ Defined once in [`libs/AquaMilkSensors/src/pins.h`](libs/AquaMilkSensors/src/pin
 | Turbidity analog in | **34** | ADC1_CH6, input-only |
 | TCS34725 SDA / SCL | **21 / 22** | I²C |
 | DS18B20 data | **4** | 4.7 kΩ pull-up to 3V3 |
-| HX711 DOUT / SCK | **16 / 17** | |
 | TFT SCLK / MOSI | **18 / 23** | VSPI |
 | TFT CS / DC / RST | **5 / 2 / 15** | DC/RST on strapping pins — pull the DevKit to flash, then reseat |
 | TFT backlight | 3V3 | (GPIO32 left free for PWM dimming) |
@@ -124,7 +122,7 @@ against contact arcing.
 flowchart LR
   ADP["12 V 1.5 A adapter"] --> B1["LM2596 → 6 V"] --> PUMP["6 V pump<br/>1N4007 across it"]
   ADP --> B2["LM2596 → 5 V"] --> ESP["ESP32 5V pin"]
-  ESP --> R3["3V3 rail"] --> SENSORS["TFT · TCS34725 · DS18B20 · HX711"]
+  ESP --> R3["3V3 rail"] --> SENSORS["TFT · TCS34725 · DS18B20"]
   ESP -.->|"GPIO25 → 3.3 V relay"| PUMP
 ```
 

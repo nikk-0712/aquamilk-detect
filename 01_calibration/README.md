@@ -37,10 +37,9 @@ instead? Copy `libs/AquaMilkSensors` into your `Arduino/libraries/` folder once.
 | `{"cmd":"calibrate","sensor":"turbidity","point":"clear"}` | Current reading becomes the clear-water zero |
 | `{"cmd":"calibrate","sensor":"color","point":"white"}` | Capture the white reference |
 | `{"cmd":"tare"}` | Zero the load cell with the chamber empty |
-| `{"cmd":"calibrate","sensor":"density","known_g":100.0}` | Set counts-per-gram from a known weight |
 | `{"cmd":"flush","ms":5000}` | Run the pump to test the flush path |
 | `{"cmd":"selftest"}` | All sensors at once → `{"t":"selftest",…}` with a flag per sensor |
-| `{"cmd":"set","key":…,"val":…}` | `oversample`, `div_ph`, `div_tds`, `div_turb`, `avg_ms`, `flush_ms`, `chamber_ml`, `conf_thr` |
+| `{"cmd":"set","key":…,"val":…}` | `oversample`, `div_ph`, `div_tds`, `div_turb`, `avg_ms`, `flush_ms`, `conf_thr` |
 | `{"cmd":"factory_reset"}` | Wipe NVS back to defaults |
 
 Every command is acked with `{"t":"ack","cmd":…,"ok":…,"msg":…}`, and anything that
@@ -60,11 +59,7 @@ Do these in order, with the web app's Calibrate page open.
    assumes this is right.
 2. **Selftest.** Hit *Test all sensors*. Every flag should be true. A false flag is a
    wiring problem, not a calibration problem — fix it before continuing.
-3. **Tare + density span.** Empty, dry chamber → *Tare*. Then put a known weight
-   (a 100 g calibration weight, or anything you can weigh on a kitchen scale) on the
-   cell → *set span with known weight*. Also set `chamber_ml` to your chamber's real
-   fixed volume; specific gravity is grams ÷ this number.
-4. **Turbidity zero.** Fill the chamber with distilled water → *set clear-water zero*.
+3. **Turbidity zero.** Fill the chamber with distilled water → *set clear-water zero*.
 5. **Colour white reference.** Same clear water (or a white card against the sensor)
    → *set white reference*.
 6. **pH, if you have buffers.** Rinse the probe, sit it in pH 7.0 → capture 7.0;

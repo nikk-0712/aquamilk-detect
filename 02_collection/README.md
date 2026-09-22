@@ -49,7 +49,6 @@ straight into a row:
 | `ph_raw_mv` | pH board output, millivolts, divider-corrected |
 | `tds_raw_mv` | TDS board output, millivolts |
 | `turbidity_raw_mv` | Turbidity board output, millivolts |
-| `density_g` | Grams in the fixed-volume chamber, tare-corrected |
 | `color_r`, `color_g`, `color_b`, `color_clear` | TCS34725 raw channels |
 | `ph_sd`, `tds_sd`, `turbidity_sd`, `density_sd`, `temp_sd` | Standard deviation across the averaging window |
 | `sg` | Derived temperature-corrected specific gravity (this is model feature 3) |

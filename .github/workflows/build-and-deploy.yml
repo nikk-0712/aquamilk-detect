@@ -89,7 +89,6 @@ jobs:
             "Adafruit BusIO@1.17.4" \
             "OneWire@2.3.8" \
             "DallasTemperature@3.9.0" \
-            "HX711 Arduino Library@0.7.5" \
             "Async TCP@3.4.9" \
             "ESP Async WebServer@3.12.0"
 
