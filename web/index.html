@@ -66,7 +66,7 @@
   <div class="hero">
     <svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4c7.2 8.4 12.4 15.2 12.4 22a12.4 12.4 0 1 1-24.8 0C11.6 19.2 16.8 12.4 24 4z" fill="none" stroke="#0FB5C9" stroke-width="2.6" stroke-linejoin="round"/><path d="M15.4 28.2c2.9 1.9 5.3-1.9 8.6-.2s4.7 1.5 6.6.2" fill="none" stroke="#0FB5C9" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="35.6" r="1.6" fill="#0FB5C9"/></svg>
     <h1>Milk purity<br><span class="gradient-text">in seconds.</span></h1>
-    <p class="lead">Six sensors read pH, conductivity, turbidity, colour, temperature and density.
+    <p class="lead">Five sensors read pH, conductivity, turbidity, colour and temperature.
       A support-vector model runs on the device itself and calls the sample
       <b>pure</b>, <b>water</b>, <b>detergent</b> or <b>starch</b> — then the chamber flushes
       itself clean for the next one.</p>
@@ -169,15 +169,8 @@
       <p class="muted small" style="margin-top:12px">Fill the chamber with distilled water before the last two.</p>
     </div>
 
-    <h2>Density</h2>
+    <h2>Display</h2>
     <div class="card">
-      <div class="row">
-        <button class="ghost" id="tare">Tare (empty chamber)</button>
-        <input type="number" id="knownG" placeholder="known weight in grams" style="max-width:220px">
-        <button class="ghost" id="calSpan">Set span</button>
-      </div>
-      <label for="chamberMl">Chamber volume (mL) — specific gravity is grams ÷ this</label>
-      <div class="row"><input type="number" id="chamberMl" style="max-width:200px"><button class="ghost small" id="saveChamber">Save</button></div>
       <label>Display orientation — rotates the on-device screen in software (no hardware turning)</label>
       <div class="row" id="calRotate">
         <button class="ghost small" data-rotate="0">0°</button>
@@ -234,7 +227,6 @@
       <div class="row" style="margin-top:20px">
         <button id="capture">Capture sample</button>
         <button class="ghost" id="colFlush">Flush</button>
-        <button class="ghost" id="colTare">Tare</button>
         <span class="small muted" id="colStatus"></span>
       </div>
       <div class="row" id="colRotate" style="margin-top:12px">
@@ -251,7 +243,7 @@
       <div class="counts" id="counts"></div>
       <div class="scroll" style="margin-top:16px"><table id="rows"><thead><tr>
         <th>Time</th><th>Milk</th><th>Adulterant</th><th>%</th><th>Source</th><th>Temp</th>
-        <th>pH mV</th><th>TDS mV</th><th>Turb mV</th><th>Grams</th><th>R</th><th>G</th><th>B</th><th>Clear</th>
+        <th>pH mV</th><th>TDS mV</th><th>Turb mV</th><th>R</th><th>G</th><th>B</th><th>Clear</th>
       </tr></thead><tbody></tbody></table></div>
       <div class="row" style="margin-top:16px">
         <button id="exportCsv">Export CSV</button>

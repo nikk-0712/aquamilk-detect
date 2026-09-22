@@ -223,16 +223,13 @@ function renderCalTable(c) {
     ["TDS K factor", fmt(c.tds_k, 3)],
     ["Turbidity clear zero", fmt(c.turb_clear_mv) + " mV"],
     ["Colour white ref", (c.col_w || []).map(v => fmt(v)).join(" / ")],
-    ["Load cell offset / scale", `${fmt(c.hx_offset)} / ${fmt(c.hx_scale, 2)} counts per g`],
     ["Divider ratios pH/TDS/turb", `${fmt(c.div_ph, 2)} / ${fmt(c.div_tds, 2)} / ${fmt(c.div_turb, 2)}`],
     ["Oversample", c.oversample],
     ["Average window", c.avg_ms + " ms"],
     ["Flush duration", c.flush_ms + " ms"],
-    ["Chamber volume", fmt(c.chamber_ml, 1) + " mL"],
     ["Confidence threshold", fmt(c.conf_thr, 2)],
   ];
   $("#calTable tbody").innerHTML = rows.map(([k, v]) => `<tr><td class="muted">${k}</td><td>${v}</td></tr>`).join("");
-  $("#chamberMl").value = c.chamber_ml;
   $$("[data-ph-mode]").forEach(b =>
     b.setAttribute("aria-pressed", String((b.dataset.phMode === "raw") === !!c.ph_raw_mode)));
 }
@@ -245,11 +242,6 @@ $("#calTds").onclick = () =>
   calLink.send({ cmd: "calibrate", sensor: "tds", known_ppm: Number($("#tdsPpm").value) || 0 });
 $("#calTurb").onclick = () => calLink.send({ cmd: "calibrate", sensor: "turbidity", point: "clear" });
 $("#calWhite").onclick = () => calLink.send({ cmd: "calibrate", sensor: "color", point: "white" });
-$("#tare").onclick = () => calLink.send({ cmd: "tare" });
-$("#calSpan").onclick = () =>
-  calLink.send({ cmd: "calibrate", sensor: "density", known_g: Number($("#knownG").value) || 0 });
-$("#saveChamber").onclick = () =>
-  calLink.send({ cmd: "set", key: "chamber_ml", val: Number($("#chamberMl").value) || 100 });
 $("#selftest").onclick = () => { $("#selftestOut").textContent = "running…"; calLink.send({ cmd: "selftest" }); };
 $("#calFlush").onclick = () => calLink.send({ cmd: "flush" });
 $$("#calRotate [data-rotate]").forEach(b => b.onclick = () =>
@@ -260,7 +252,7 @@ $("#factory").onclick = () => {
 
 // ================================================================= COLLECT ===
 const COLUMNS = ["timestamp_iso", "milk_type", "adulterant", "level_pct", "source",
-  "temp_c", "ph_raw_mv", "tds_raw_mv", "turbidity_raw_mv", "density_g",
+  "temp_c", "ph_raw_mv", "tds_raw_mv", "turbidity_raw_mv",
   "color_r", "color_g", "color_b", "color_clear"];
 const rows = [];
 let busy = false;
@@ -312,7 +304,7 @@ function addRow(s) {
     level_pct: Number($("#level").value) || 0,
     source: ($("#source").value || "").trim(),
     temp_c: s.temp_c, ph_raw_mv: s.ph_raw_mv, tds_raw_mv: s.tds_raw_mv,
-    turbidity_raw_mv: s.turbidity_raw_mv, density_g: s.density_g,
+    turbidity_raw_mv: s.turbidity_raw_mv,
     color_r: s.color_r, color_g: s.color_g, color_b: s.color_b, color_clear: s.color_clear,
     _sd: s,   // kept only for the noisy-capture hint; never exported
   });
@@ -323,12 +315,12 @@ function addRow(s) {
 function renderRows() {
   $("#rowCount").textContent = rows.length;
   $("#rows tbody").innerHTML = rows.slice().reverse().slice(0, 60).map(r => {
-    const noisy = r._sd && (r._sd.density_sd > 1 || r._sd.turbidity_sd > 60);
+    const noisy = r._sd && (r._sd.turbidity_sd > 60);
     return `<tr${noisy ? ' style="color:var(--uncertain)" title="high variance during capture — consider retaking"' : ""}>
       <td>${r.timestamp_iso.slice(11, 19)}</td><td>${r.milk_type}</td><td>${r.adulterant}</td>
       <td>${r.level_pct}</td><td>${r.source ? esc(r.source) : "–"}</td><td>${fmt(r.temp_c, 1)}</td>
       <td>${fmt(r.ph_raw_mv)}</td><td>${fmt(r.tds_raw_mv)}</td><td>${fmt(r.turbidity_raw_mv)}</td>
-      <td>${fmt(r.density_g, 1)}</td><td>${r.color_r}</td><td>${r.color_g}</td><td>${r.color_b}</td><td>${r.color_clear}</td></tr>`;
+      <td>${r.color_r}</td><td>${r.color_g}</td><td>${r.color_b}</td><td>${r.color_clear}</td></tr>`;
   }).join("");
 
   const classes = ["pure", "water", "detergent", "starch"];
@@ -341,7 +333,6 @@ function renderRows() {
 
 $("#capture").onclick = () => { if (!busy) colLink.send({ cmd: "capture" }); };
 $("#colFlush").onclick = () => colLink.send({ cmd: "flush" });
-$("#colTare").onclick = () => colLink.send({ cmd: "tare" });
 $$("#colRotate [data-rotate]").forEach(b => b.onclick = () =>
   colLink.send({ cmd: "set", key: "rotation", val: Number(b.dataset.rotate) }));
 $("#undoRow").onclick = () => { rows.pop(); renderRows(); };
