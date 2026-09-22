@@ -38,6 +38,8 @@ void readingJson(JsonDocument& d) {
   d["dens"] = r.density_g;
   d["r"] = r.r; d["g"] = r.g; d["b"] = r.b; d["c"] = r.c;
   d["ts"] = r.ts_ms;
+  d["hx_raw"]   = sensorsScaleRaw();      // HX711 diagnostics (weight debug)
+  d["hx_reads"] = sensorsScaleReads();
 
   JsonObject calc = d["calc"].to<JsonObject>();
   float ph = phFromMv(r.ph_mv);

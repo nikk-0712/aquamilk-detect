@@ -18,6 +18,8 @@ static OneWire           oneWire(PIN_ONEWIRE);
 static DallasTemperature ds18b20(&oneWire);
 static Adafruit_TCS34725  tcs(TCS34725_INTEGRATIONTIME_24MS, TCS34725_GAIN_1X);
 static HX711             scale;
+static long              hx_last_raw = 0;   // last raw HX711 count (diagnostic)
+static uint32_t          hx_reads = 0;      // times the HX711 signalled ready (diagnostic)
 
 static bool     tcs_present = false;
 static uint32_t t_analog = 0, t_color = 0, t_temp_req = 0;
@@ -208,6 +210,7 @@ void sensorsUpdate() {
   // --- HX711: read whenever a conversion is sitting there (~10/s) ---
   if (scale.is_ready()) {
     long raw = scale.read();
+    hx_last_raw = raw; hx_reads++;                    // diagnostic: prove the HX711 responds
     float grams = (raw - (float)cal.hx_offset) / (cal.hx_scale != 0 ? cal.hx_scale : 1.0f);
     // light smoothing: the cell is noisy at 10 SPS and the chamber is not moving
     g_r.density_g = isnan(g_r.density_g) ? grams : (0.7f * g_r.density_g + 0.3f * grams);
@@ -308,6 +311,9 @@ void calColorWhite() {
   cal.col_wr = g_r.r; cal.col_wg = g_r.g; cal.col_wb = g_r.b; cal.col_wc = g_r.c;
   calSave();
 }
+
+long     sensorsScaleRaw()   { return hx_last_raw; }
+uint32_t sensorsScaleReads() { return hx_reads; }
 
 void calTare() {
   scale.set_offset(scale.read_average(16));

@@ -166,6 +166,8 @@ a.dl{display:block;text-align:center;padding:14px;border-radius:10px;background:
 <div class=m><b id=temp>-</b><span>Temp (C)</span></div>
 <div class=m><b id=col>-</b><span>Colour R/G/B</span></div>
 <div class=m><b id=cnt>0</b><span>Saved samples</span></div>
+<div class=m><b id=hxraw>-</b><span>HX711 raw</span></div>
+<div class=m><b id=hxrd>-</b><span>HX711 reads</span></div>
 </div>
 <div class=row>
 <button id=cap>Capture</button>
@@ -184,6 +186,7 @@ function poll(){fetch('/api/reading').then(function(r){return r.json()}).then(fu
  $('ph').textContent=Math.round(d.ph);$('tds').textContent=Math.round(d.tds);
  $('turb').textContent=Math.round(d.turb);$('temp').textContent=(d.temp==null?0:d.temp).toFixed(1);
  $('col').textContent=d.r+'/'+d.g+'/'+d.b;$('cnt').textContent=d.count;
+ $('hxraw').textContent=d.hx_raw;$('hxrd').textContent=d.hx_reads;
  var wb=busy;busy=(d.state!=='idle');$('cap').disabled=busy;
  if(!busy&&wb)$('st').textContent='saved - '+d.count+' samples';
 }).catch(function(){$('st').textContent='link lost - move closer / rejoin';})}

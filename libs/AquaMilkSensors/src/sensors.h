@@ -124,3 +124,8 @@ void pumpUpdate();
 
 // All-sensors health check. Fills ok_* flags, writes a reason into `why` on failure.
 bool sensorsSelftest(Reading& out, char* why, size_t why_len);
+
+// HX711 diagnostics: the last raw count, and how many times the chip has signalled
+// ready. If the read count never climbs, the HX711 is not responding (power/DOUT).
+long     sensorsScaleRaw();
+uint32_t sensorsScaleReads();
