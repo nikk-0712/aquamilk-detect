@@ -278,8 +278,7 @@ void loop() {
   if (state == AVERAGING && !avgBusy()) {
     AveragedSample s = avgFinish();
     if (s.ok) { csvAppend(s); sample_count++; }
-    pumpStart(cal.flush_ms);               // auto-flush after every capture
-    state = FLUSHING;
+    state = IDLE;                           // no auto-flush; use the Flush button
   }
   if (state == FLUSHING && !pumpBusy()) state = IDLE;
 
