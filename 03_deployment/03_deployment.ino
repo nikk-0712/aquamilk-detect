@@ -154,18 +154,21 @@ static void pushResult() {
 
 // ------------------------------------------------------------------------ TFT
 static void tftIdle() {
-  static char v_ssid[22], v_ip[22], v_pass[22];
+  const Reading& r = sensorsLatest();
+  static char v_ssid[22], v_ip[22], v_pass[22], v_col[16];
   snprintf(v_ssid, sizeof v_ssid, "%s", (sta_mode ? sta_ssid : ap_ssid).c_str());
   snprintf(v_ip,   sizeof v_ip,   "%s", ip_str.c_str());
   snprintf(v_pass, sizeof v_pass, "%s", sta_mode ? "aquamilk.local" : ap_pass.c_str());
+  snprintf(v_col,  sizeof v_col,  "%u/%u/%u", r.r, r.g, r.b);
 
-  const char* keys[] = { "Wi-Fi", sta_mode ? "Host" : "Password", "Address", "Model" };
+  const char* keys[] = { "Wi-Fi", sta_mode ? "Host" : "Password", "Address", "Model", "Colour" };
   const char* vals[] = { v_ssid, v_pass, v_ip,
 #if MODEL_IS_PLACEHOLDER
-                         "none"
+                         "none",
 #else
-                         "ready"
+                         "ready",
 #endif
+                         v_col
                        };
   dispKV("Control from dashboard", keys, vals, sizeof(keys) / sizeof(keys[0]));
 }
@@ -217,8 +220,7 @@ static void finishTest() {
   pushResult();
   tftVerdict();
 
-  pumpStart(cal.flush_ms);          // auto-flush, then back to idle (§7)
-  app = FLUSHING;
+  app = IDLE;                       // no auto-flush; flush manually from the dashboard
   pushStatus();
 }
 
