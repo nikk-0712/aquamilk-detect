@@ -288,7 +288,7 @@ button.sec:hover{box-shadow:0 1px 0 var(--hi) inset,0 8px 20px rgba(0,0,0,.35)}
 
 <section id="hist" hidden>
 <div class="card"><h2>This session</h2><table><thead><tr><th>Ago</th><th>Verdict</th><th>Conf</th></tr></thead><tbody id="sess"></tbody></table></div>
-<div class="card"><h2>Device log (last 200)</h2><table><thead><tr><th>Uptime</th><th>Verdict</th><th>Conf</th><th>SG</th></tr></thead><tbody id="log"></tbody></table>
+<div class="card"><h2>Device log (last 200)</h2><table><thead><tr><th>Uptime</th><th>Verdict</th><th>Conf</th></tr></thead><tbody id="log"></tbody></table>
 <div class="row" style="margin-top:12px"><button class="sec" id="csv">Export CSV</button><button class="sec" id="reload">Reload log</button></div></div>
 </section>
 
@@ -307,7 +307,7 @@ button.sec:hover{box-shadow:0 1px 0 var(--hi) inset,0 8px 20px rgba(0,0,0,.35)}
 <div class="row" style="margin-top:14px"><button id="wsave">Save &amp; reboot</button></div></div>
 
 <div class="card"><h2>Maintenance</h2><div class="row">
-<button class="sec" id="tare">Tare</button><button class="sec" id="stest">Re-check calibration</button></div>
+<button class="sec" id="stest">Re-check calibration</button></div>
 <details style="margin-top:14px"><summary>Factory reset</summary>
 <div class="vsub" style="margin:8px 0">Clears calibration, settings and Wi-Fi. The trained model stays (it is compiled in).</div>
 <button class="sec" id="fr" style="color:var(--red);border-color:var(--red)">Erase settings</button></details></div>
@@ -319,7 +319,7 @@ button.sec:hover{box-shadow:0 1px 0 var(--hi) inset,0 8px 20px rgba(0,0,0,.35)}
 </section>
 
 <script>
-const $=i=>document.getElementById(i),F=["pH","TDS","Turbidity","Density","Temp","Red","Green","Blue","Clear"];
+const $=i=>document.getElementById(i),F=["pH","TDS","Turbidity","Temp","Red","Green","Blue","Clear"];
 let sess=[],last=null,ws,logRows=[];
 const col=v=>v.uncertain?"var(--amber)":(v.adulterated?"var(--red)":"var(--green)");
 const ago=ms=>{const s=Math.round(ms/1000);return s<60?s+"s":s<3600?Math.round(s/60)+"m":Math.round(s/3600)+"h"};
@@ -352,8 +352,8 @@ function renderZ(z){if(!z)return;const m=Math.max(3,...z.map(Math.abs));
 
 function renderSens(r){const c=r.calc||{};
   const cells=[["pH",c.ph==null?(r.ph||0).toFixed(0)+" mV":c.ph.toFixed(2)],["TDS",(c.ppm||0).toFixed(0)+" ppm"],
-  ["Turbidity",(c.ntu||0).toFixed(0)+" NTU"],["Specific gravity",(c.sg||0).toFixed(3)],
-  ["Temperature",(r.temp||0).toFixed(1)+" °C"],["Weight",(r.dens||0).toFixed(1)+" g"],
+  ["Turbidity",(c.ntu||0).toFixed(0)+" NTU"],
+  ["Temperature",(r.temp||0).toFixed(1)+" °C"],
   ["Colour",`${r.r}/${r.g}/${r.b}`],["Clear",r.c]];
   $("sens").innerHTML=cells.map(([k,v])=>`<div><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");}
 
@@ -398,7 +398,6 @@ window.setWifiMode=v=>{const li=items.find(x=>x.dataset.v===v)||items[0];pick(li
 const post=(p,q="")=>fetch(p+(q?"?"+q:""),{method:"POST"});
 $("run").onclick=()=>post("/api/test");
 $("flush").onclick=()=>post("/api/flush");
-$("tare").onclick=()=>post("/api/tare").then(()=>alert("Chamber zeroed"));
 $("stest").onclick=()=>fetch("/api/selftest",{method:"POST"}).then(r=>r.json())
   .then(j=>alert(j.ok?"All sensors responding":"Check wiring: "+j.why));
 $("fr").onclick=()=>confirm("Erase calibration, settings and Wi-Fi?")&&post("/api/factory_reset");
@@ -409,18 +408,18 @@ $("wsave").onclick=()=>confirm("Save Wi-Fi and reboot the device?")&&
 const thrFill=()=>{const t=$("thr"),p=(t.value-t.min)/(t.max-t.min)*100;t.style.setProperty("--fill",p+"%");$("thrv").textContent=(+t.value).toFixed(2)};
 $("thr").oninput=thrFill;
 $("reload").onclick=loadLog;
-$("csv").onclick=()=>{const rows=[["uptime_ms","verdict","confidence","ph_mv","tds_mv","turbidity_mv","sg","temp_c"]]
-  .concat(logRows.map(r=>[r.ms,r.cls,r.conf,r.ph,r.tds,r.turb,r.sg,r.temp]));
+$("csv").onclick=()=>{const rows=[["uptime_ms","verdict","confidence","ph_mv","tds_mv","turbidity_mv","temp_c"]]
+  .concat(logRows.map(r=>[r.ms,r.cls,r.conf,r.ph,r.tds,r.turb,r.temp]));
   const b=new Blob([rows.map(r=>r.join(",")).join("\n")],{type:"text/csv"});
   const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="aquamilk-log.csv";a.click();};
 
-// /api/log is the raw log file: ms,class,conf,ph,tds,turb,sg,temp per line.
+// /api/log is the raw log file: ms,class,conf,ph,tds,turb,temp per line.
 function loadLog(){fetch("/api/log").then(r=>r.text()).then(t=>{
   logRows=t.trim().split("\n").filter(Boolean).map(l=>{const c=l.split(",");
-    return {ms:+c[0],cls:c[1],conf:+c[2],ph:c[3],tds:c[4],turb:c[5],sg:c[6],temp:c[7]};});
+    return {ms:+c[0],cls:c[1],conf:+c[2],ph:c[3],tds:c[4],turb:c[5],temp:c[6]};});
   $("log").innerHTML=logRows.slice().reverse().slice(0,200).map(r=>
-   `<tr><td>${up(r.ms)}</td><td>${r.cls}</td><td>${Math.round(r.conf*100)}%</td><td>${(+r.sg).toFixed(3)}</td></tr>`)
-   .join("")||`<tr><td colspan="4" class="k">Empty</td></tr>`;})
+   `<tr><td>${up(r.ms)}</td><td>${r.cls}</td><td>${Math.round(r.conf*100)}%</td></tr>`)
+   .join("")||`<tr><td colspan="3" class="k">Empty</td></tr>`;})
   .catch(()=>{$("log").innerHTML=`<tr><td colspan="4" class="k">Could not read the log</td></tr>`;});}
 
 // Boot state. The .catch matters: without it one failed request (device rebooting,
